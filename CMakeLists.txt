@@ -4,8 +4,9 @@ project(pathfinder)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(
-    pathfinder
+find_package(GTest REQUIRED)
 
-    src/main.cpp
-)
+enable_testing()
+
+add_subdirectory(src)
+add_subdirectory(test)

@@ -1,4 +1,5 @@
 #include <iostream>
+#include "Model/CObstacle.h"
 
 int main()
 {
