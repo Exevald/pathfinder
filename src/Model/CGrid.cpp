@@ -33,6 +33,11 @@ double CalculateSegmentTime(double safetyScore)
 
 std::vector<std::array<double, 4>> SmoothPath(const std::vector<CCell*>& path, double cellHeight)
 {
+	if (path.empty())
+	{
+		return {};
+	}
+
 	std::vector<std::array<double, 3>> waypoints;
 	for (CCell* cell : path)
 	{
