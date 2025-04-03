@@ -81,6 +81,11 @@ std::vector<std::array<double, 4>> SmoothPath(const std::vector<CCell*>& path, d
 
 	return smoothPathWithSpeed;
 }
+
+bool IsVerticalTransitionAllowed(const Coords& coords)
+{
+	return (coords.x % 5 == 0 && coords.y % 5 == 0);
+}
 } // namespace
 
 CGrid::CGrid(int sizeX, int sizeY, int sizeZ, double layerHeight, double droneRadius, double k, double cellLength)
@@ -183,21 +188,34 @@ std::vector<CCell*> CGrid::GetValidNeighbors(CCell* cell)
 	{
 		for (int dy = -1; dy <= 1; ++dy)
 		{
-			for (int dz = -1; dz <= 1; ++dz)
+			if (dx == 0 && dy == 0)
 			{
-				if (dx == 0 && dy == 0 && dz == 0)
-					continue;
+				continue;
+			}
 
-				int nx = coords.x + dx;
-				int ny = coords.y + dy;
-				int nz = coords.z + dz;
+			int newX = coords.x + dx;
+			int newY = coords.y + dy;
+			int newZ = coords.z;
 
-				if (nx >= 0 && nx < m_gridSizeX && ny >= 0 && ny < m_gridSizeY && nz >= 0 && nz < m_gridSizeZ)
-				{
-					CCell* neighbor = &m_cells[nx][ny][nz];
-					if (neighbor->GetCost() != 254.0)
-						neighbors.push_back(neighbor);
-				}
+			if (newX >= 0 && newX < m_gridSizeX && newY >= 0 && newY < m_gridSizeY && newZ >= 0 && newZ < m_gridSizeZ)
+			{
+				CCell* neighbor = &m_cells[newX][newY][newZ];
+				if (neighbor->GetCost() != 254.0)
+					neighbors.push_back(neighbor);
+			}
+		}
+	}
+
+	if (IsVerticalTransitionAllowed(coords))
+	{
+		for (int dz = -1; dz <= 1; dz += 2)
+		{
+			int nz = coords.z + dz;
+			if (nz >= 0 && nz < m_gridSizeZ)
+			{
+				CCell* neighbor = &m_cells[coords.x][coords.y][nz];
+				if (neighbor->GetCost() != 254.0)
+					neighbors.push_back(neighbor);
 			}
 		}
 	}
@@ -289,5 +307,6 @@ double CGrid::Heuristic(const CCell& a, const CCell& b) const
 	double dy = (aCoords.y - bCoords.y) * m_cellLength;
 	double dz = (aCoords.z - bCoords.z) * m_layerHeight;
 
-	return std::sqrt(dx * dx + dy * dy + dz * dz);
+	const double fv = 2.0;
+	return std::sqrt(dx * dx + dy * dy + (dz * fv) * (dz * fv));
 }
