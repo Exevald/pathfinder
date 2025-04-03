@@ -1,9 +1,14 @@
-#include <iostream>
-#include "Model/CObstacle.h"
+#include "View/CWindow.h"
+#include <QApplication>
 
-int main()
+int main(int argc, char* argv[])
 {
-    std::cout << "Pathfinder" << std::endl;
+	qputenv("QT_QPA_PLATFORM", "wayland");
+	QApplication app(argc, argv);
 
-    return EXIT_SUCCESS;
+	CWindow window;
+	window.resize(1366, 768);
+	window.show();
+
+	return QApplication::exec();
 }

@@ -5,6 +5,6 @@ add_executable(pathfinder_test
         BezierCurve_test.cpp
 )
 
-target_link_libraries(pathfinder_test PRIVATE GTest::GTest GTest::gtest_main pathfinder_lib)
+target_link_libraries(pathfinder_test PRIVATE GTest::GTest GTest::gtest_main Model)
 
 gtest_discover_tests(pathfinder_test)

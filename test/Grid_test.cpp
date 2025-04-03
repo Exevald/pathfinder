@@ -1,4 +1,4 @@
-#include "Model/CGrid.h"
+#include "../src/Model/CGrid.h"
 #include <gtest/gtest.h>
 #include <queue>
 #include <unordered_set>

@@ -1,9 +1,8 @@
-add_library(pathfinder_lib STATIC
-        main.cpp
-        Model/CGrid.cpp
-        Model/СCell.cpp
-        Model/CObstacle.cpp
-        Model/CBezierCurve.cpp
-)
+add_executable(pathfinder main.cpp)
 
-target_include_directories(pathfinder_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(pathfinder PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+
+add_subdirectory(View)
+add_subdirectory(Model)
+
+target_link_libraries(pathfinder PRIVATE View Model)

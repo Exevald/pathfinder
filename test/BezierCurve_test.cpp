@@ -1,4 +1,4 @@
-#include "Model/CBezierCurve.h"
+#include "../src/Model/CBezierCurve.h"
 #include <gtest/gtest.h>
 
 TEST(BezierCurve, TestEvaluateAtEndpoints)
