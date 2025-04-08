@@ -9,6 +9,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
 find_package(GTest REQUIRED)
+include_directories(/usr/include/lib3ds)
 
 enable_testing()
 
