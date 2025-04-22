@@ -4,6 +4,8 @@ add_library(View
 )
 
 target_link_libraries(View PRIVATE
+        ViewModel
+
         Qt6::OpenGL
         Qt6::Widgets
         Qt6::Gui

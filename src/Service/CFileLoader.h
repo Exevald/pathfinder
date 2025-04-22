@@ -8,7 +8,6 @@ class CFileLoader
 {
 public:
 	explicit CFileLoader(std::unique_ptr<IMeshLoader> meshLoader);
-
 	CGrid LoadAndConvert();
 
 private:

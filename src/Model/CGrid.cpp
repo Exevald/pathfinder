@@ -114,6 +114,56 @@ CGrid::CGrid(int sizeX, int sizeY, int sizeZ, double layerHeight, double droneRa
 	InitializeConnections();
 }
 
+CGrid::CGrid(const CGrid& other)
+	: m_gridSizeX(other.m_gridSizeX)
+	, m_gridSizeY(other.m_gridSizeY)
+	, m_gridSizeZ(other.m_gridSizeZ)
+	, m_layerHeight(other.m_layerHeight)
+	, m_droneRadius(other.m_droneRadius)
+	, m_k(other.m_k)
+	, m_cellLength(other.m_cellLength)
+	, m_cells(other.m_cells)
+{
+}
+
+CGrid::CGrid(CGrid&& other) noexcept
+	: m_gridSizeX(std::exchange(other.m_gridSizeX, 0))
+	, m_gridSizeY(std::exchange(other.m_gridSizeY, 0))
+	, m_gridSizeZ(std::exchange(other.m_gridSizeZ, 0))
+	, m_layerHeight(std::exchange(other.m_layerHeight, 0.0))
+	, m_droneRadius(std::exchange(other.m_droneRadius, 0.0))
+	, m_k(std::exchange(other.m_k, 0.0))
+	, m_cellLength(std::exchange(other.m_cellLength, 0.0))
+	, m_cells(std::move(other.m_cells))
+{
+}
+
+CGrid& CGrid::operator=(const CGrid& other)
+{
+	if (this != &other)
+	{
+		CGrid temp(other);
+		Swap(*this, temp);
+	}
+	return *this;
+}
+
+CGrid& CGrid::operator=(CGrid&& other) noexcept
+{
+	if (this != &other)
+	{
+		m_gridSizeX = std::exchange(other.m_gridSizeX, 0);
+		m_gridSizeY = std::exchange(other.m_gridSizeY, 0);
+		m_gridSizeZ = std::exchange(other.m_gridSizeZ, 0);
+		m_layerHeight = std::exchange(other.m_layerHeight, 0.0);
+		m_droneRadius = std::exchange(other.m_droneRadius, 0.0);
+		m_k = std::exchange(other.m_k, 0.0);
+		m_cellLength = std::exchange(other.m_cellLength, 0.0);
+		m_cells = std::move(other.m_cells);
+	}
+	return *this;
+}
+
 void CGrid::AddObstacle(const CObstacle& obstacle)
 {
 	m_obstacles.push_back(obstacle);
@@ -228,6 +278,11 @@ std::vector<CCell*> CGrid::GetValidNeighbors(CCell* cell)
 	return m_cells;
 }
 
+std::vector<CObstacle> CGrid::GetObstacles() const
+{
+	return m_obstacles;
+}
+
 void CGrid::InitializeConnections()
 {
 	for (int x = 0; x < m_gridSizeX; ++x)
@@ -309,4 +364,16 @@ double CGrid::Heuristic(const CCell& a, const CCell& b) const
 
 	const double fv = 2.0;
 	return std::sqrt(dx * dx + dy * dy + (dz * fv) * (dz * fv));
+}
+
+void CGrid::Swap(CGrid& lhs, CGrid& rhs) noexcept
+{
+	std::swap(lhs.m_gridSizeX, rhs.m_gridSizeX);
+	std::swap(lhs.m_gridSizeY, rhs.m_gridSizeY);
+	std::swap(lhs.m_gridSizeZ, rhs.m_gridSizeZ);
+	std::swap(lhs.m_layerHeight, rhs.m_layerHeight);
+	std::swap(lhs.m_droneRadius, rhs.m_droneRadius);
+	std::swap(lhs.m_k, rhs.m_k);
+	std::swap(lhs.m_cellLength, rhs.m_cellLength);
+	std::swap(lhs.m_cells, rhs.m_cells);
 }

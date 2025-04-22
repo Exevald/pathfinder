@@ -9,7 +9,28 @@ CGrid CFileLoader::LoadAndConvert()
 {
 	auto meshes = m_meshLoader->GetMeshes();
 
-	CGrid grid(100, 100, 100, 1.0, 0.5, 1.0, 1.0);
+	CBoundingBox totalBoundingBox;
+	for (const auto& mesh : meshes)
+	{
+		const auto& meshBoundingBox = mesh.GetBoundingBox();
+		if (totalBoundingBox.IsEmpty())
+		{
+			totalBoundingBox = meshBoundingBox;
+		}
+		else
+		{
+			totalBoundingBox = totalBoundingBox.Union(meshBoundingBox);
+		}
+	}
+
+	const auto& minCoord = totalBoundingBox.GetMinCoord();
+	const auto& maxCoord = totalBoundingBox.GetMaxCoord();
+
+	int gridSizeX = static_cast<int>(std::ceil(maxCoord.x - minCoord.x));
+	int gridSizeY = static_cast<int>(std::ceil(maxCoord.y - minCoord.y));
+	int gridSizeZ = static_cast<int>(std::ceil(maxCoord.z - minCoord.z));
+
+	CGrid grid(gridSizeX, gridSizeY, gridSizeZ, 1.0, 0.5, 1.0, 1.0);
 
 	for (const auto& mesh : meshes)
 	{

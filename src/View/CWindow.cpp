@@ -6,10 +6,11 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-CWindow::CWindow(QWidget* parent)
+CWindow::CWindow(QWidget* parent, std::unique_ptr<CGridViewModel> viewModel)
 	: QMainWindow(parent)
 	, m_graphicsView(nullptr)
 	, m_scene(nullptr)
+	, m_gridViewModel(std::move(viewModel))
 {
 	ShowMainMenu();
 }
@@ -88,11 +89,11 @@ void CWindow::OnOpenCADFile()
 		this,
 		"Выберите CAD-файл",
 		"",
-		"CAD Files (*.cad *.dwg *.dxf);;All Files (*)");
+		"(*.obj);;All Files (*)");
 
 	if (!filePath.isEmpty())
 	{
-		QMessageBox::information(this, "Файл выбран", "Путь к файлу: " + filePath);
+		m_gridViewModel->LoadData(filePath.toStdString());
 	}
 }
 

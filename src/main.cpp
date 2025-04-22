@@ -3,10 +3,10 @@
 
 int main(int argc, char* argv[])
 {
-	qputenv("QT_QPA_PLATFORM", "wayland");
 	QApplication app(argc, argv);
+	auto viewModel = std::make_unique<CGridViewModel>();
 
-	CWindow window;
+	CWindow window(nullptr, std::move(viewModel));
 	window.resize(1366, 768);
 	window.show();
 
