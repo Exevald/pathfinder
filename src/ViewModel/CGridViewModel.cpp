@@ -2,6 +2,7 @@
 #include "../Service/CObjLoader.h"
 #include "C3dsLoader.h"
 #include <iostream>
+#include <algorithm>
 
 namespace
 {

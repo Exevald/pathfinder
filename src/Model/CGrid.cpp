@@ -1,5 +1,8 @@
 #include "CGrid.h"
 #include "CBezierCurve.h"
+#include <utility>
+#include <cmath>
+#include <algorithm>
 
 namespace
 {

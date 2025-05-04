@@ -1,5 +1,6 @@
 #include "CBoundingBox.h"
 #include <algorithm>
+#include <stdexcept>
 
 CBoundingBox::CBoundingBox()
 	: m_isEmpty(false)
