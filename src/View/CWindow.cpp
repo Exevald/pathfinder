@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QLabel>
 
 CWindow::CWindow(QWidget* parent, std::unique_ptr<CGridViewModel> viewModel)
 	: QMainWindow(parent)
@@ -22,63 +23,72 @@ void CWindow::ShowMainMenu()
 	setCentralWidget(centralWidget);
 
 	auto* layout = new QVBoxLayout(centralWidget);
+	layout->setContentsMargins(50, 100, 0, 0);
+
+	auto* leftLayout = new QVBoxLayout();
+
+	auto* titleLabel = new QLabel("Pathfinder", this);
+	titleLabel->setStyleSheet(
+		"QLabel {"
+		"   font-size: 50px;"
+		"   font-weight: 600;"
+		"   color: black;"
+		" 	margin-bottom: 100px;"
+		"}");
+
+	layout->addWidget(titleLabel, 0, Qt::AlignLeft | Qt::AlignTop);
 
 	auto* loadCADButton = new QPushButton("Загрузить CAD-файл", this);
 	connect(loadCADButton, &QPushButton::clicked, this, &CWindow::OnOpenCADFile);
-	loadCADButton->setStyleSheet(
-		"QPushButton {"
-		"   background-color: #4CAF50;"
-		"   color: white;"
-		"   border: none;"
-		"   border-radius: 5px;"
-		"   padding: 10px 15px;"
-		"}"
-		"QPushButton:hover {"
-		"   background-color: #45A049;"
-		"}"
-		"QPushButton:pressed {"
-		"   background-color: #3E8E41;"
-		"}");
-
-	auto* drawButton = new QPushButton("Отрисовать", this);
-	connect(drawButton, &QPushButton::clicked, this, &CWindow::OnDraw3DSpace);
-	drawButton->setStyleSheet(
-		"QPushButton {"
-		"   background-color: #2196F3;"
-		"   color: white;"
-		"   border: none;"
-		"   border-radius: 5px;"
-		"   padding: 10px 15px;"
-		"}"
-		"QPushButton:hover {"
-		"   background-color: #1E88E5;"
-		"}"
-		"QPushButton:pressed {"
-		"   background-color: #1976D2;"
-		"}");
 
 	auto* exitButton = new QPushButton("Выход", this);
 	connect(exitButton, &QPushButton::clicked, this, []() { QApplication::quit(); });
-	exitButton->setStyleSheet(
+
+	loadCADButton->setStyleSheet(
 		"QPushButton {"
-		"   background-color: #F44336;"
+		"   background-color: #0E39C7;"
 		"   color: white;"
 		"   border: none;"
 		"   border-radius: 5px;"
-		"   padding: 10px 15px;"
+		"   padding: 20px 25px;"
+		"	font-size: 18px;"
+		"	font-weight: 500;"
 		"}"
 		"QPushButton:hover {"
-		"   background-color: #D32F2F;"
+		"   background-color: #0E34B4;"
 		"}"
 		"QPushButton:pressed {"
-		"   background-color: #C62828;"
+		"   background-color: #0C2FA1;"
+		"}");
+
+	exitButton->setStyleSheet(
+		"QPushButton {"
+		"   background-color: #0E39C7;"
+		"   color: white;"
+		"   border: none;"
+		"   border-radius: 5px;"
+		"   padding: 20px 25px;"
+		"	font-size: 18px;"
+		"	font-weight: 500;"
+		"}"
+		"QPushButton:hover {"
+		"   background-color: #0E34B4;"
+		"}"
+		"QPushButton:pressed {"
+		"   background-color: #0C2FA1;"
 		"}");
 
 	layout->addStretch();
-	layout->addWidget(loadCADButton, 0, Qt::AlignCenter);
-	layout->addWidget(drawButton, 0, Qt::AlignCenter);
-	layout->addWidget(exitButton, 0, Qt::AlignCenter);
+	layout->addWidget(loadCADButton, 0, Qt::AlignLeft);
+	layout->addWidget(exitButton, 0, Qt::AlignLeft);
 	layout->addStretch();
+
+	auto iconLabel = new QLabel(this);
+	QPixmap originalPixmap("../../Compass.svg");
+	QPixmap scaledPixmap = originalPixmap.scaled(500, 500, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+	iconLabel->setPixmap(scaledPixmap);
+	iconLabel->setAlignment(Qt::AlignRight);
+	layout->addWidget(iconLabel);
 
 	layout->setSpacing(20);
 }

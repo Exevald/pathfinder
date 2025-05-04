@@ -17,3 +17,11 @@ target_link_libraries(pathfinder PRIVATE
         Qt6::OpenGLWidgets
         OpenGL::GLU
 )
+
+
+foreach (res ${RESOURCES})
+    add_custom_command(
+            TARGET pathfinder POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy ${res} ${CMAKE_BINARY_DIR}/
+    )
+endforeach ()
