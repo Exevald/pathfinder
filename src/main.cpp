@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
 	auto viewModel = std::make_unique<CGridViewModel>();
 
 	CWindow window(nullptr, std::move(viewModel));
-	window.resize(1366, 768);
+	window.resize(1920, 1080);
 	window.show();
 
 	return QApplication::exec();
