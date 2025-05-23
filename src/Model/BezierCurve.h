@@ -1,13 +1,12 @@
 #pragma once
 
 #include <array>
-#include <cmath>
 #include <vector>
 
-class CBezierCurve
+class BezierCurve
 {
 public:
-	explicit CBezierCurve(const std::vector<std::array<double, 3>>& controlPoints);
+	explicit BezierCurve(const std::vector<std::array<double, 3>>& controlPoints);
 
 	[[nodiscard]] std::array<double, 3> Evaluate(double t) const;
 

@@ -1,14 +1,15 @@
-#include "CGrid.h"
-#include "CBezierCurve.h"
-#include <utility>
-#include <cmath>
+#include "BezierCurve.h"
+#include "Grid.h"
 #include <algorithm>
+#include <cmath>
+#include <queue>
+#include <utility>
 
 namespace
 {
 struct NodeWithPriority
 {
-	CCell* cell;
+	Cell* cell;
 	double priority;
 
 	bool operator<(const NodeWithPriority& other) const
@@ -17,24 +18,24 @@ struct NodeWithPriority
 	}
 };
 
-double EvaluateSegmentSafety(const std::vector<CCell*>& segment)
+double EvaluateSegmentSafety(const std::vector<Cell*>& segment)
 {
 	double totalCost = 0.0;
-	for (CCell* cell : segment)
+	for (const Cell* cell : segment)
 	{
 		totalCost += cell->GetCost();
 	}
 	return totalCost / static_cast<double>(segment.size());
 }
 
-double CalculateSegmentTime(double safetyScore)
+double CalculateSegmentTime(const double safetyScore)
 {
-	const double baseTime = 1.0;
-	const double slowdownFactor = 2.0;
+	constexpr double baseTime = 1.0;
+	constexpr double slowdownFactor = 2.0;
 	return baseTime + (safetyScore - 50.0) / 254.0 * slowdownFactor;
 }
 
-std::vector<std::array<double, 4>> SmoothPath(const std::vector<CCell*>& path, double cellHeight)
+std::vector<std::array<double, 4>> SmoothPath(const std::vector<Cell*>& path, double cellHeight)
 {
 	if (path.empty())
 	{
@@ -42,7 +43,7 @@ std::vector<std::array<double, 4>> SmoothPath(const std::vector<CCell*>& path, d
 	}
 
 	std::vector<std::array<double, 3>> waypoints;
-	for (CCell* cell : path)
+	for (Cell* cell : path)
 	{
 		auto coords = cell->GetCoords();
 		double cellLength = cell->GetCellLength();
@@ -57,27 +58,27 @@ std::vector<std::array<double, 4>> SmoothPath(const std::vector<CCell*>& path, d
 		return {};
 	}
 
-	std::copy(waypoints.begin(), waypoints.end(), std::back_inserter(controlPoints));
-	CBezierCurve curve(controlPoints);
+	std::ranges::copy(waypoints, std::back_inserter(controlPoints));
+	const BezierCurve curve(controlPoints);
 
 	std::vector<std::array<double, 4>> smoothPathWithSpeed;
-	int segments = 100;
+	constexpr int segmentsCount = 100;
 	double totalTime = 0.0;
 
-	for (int i = 0; i <= segments; ++i)
+	for (int i = 0; i <= segmentsCount; ++i)
 	{
-		double t = static_cast<double>(i) / segments;
-		if (i == segments)
+		double t = static_cast<double>(i) / segmentsCount;
+		if (i == segmentsCount)
 		{
 			t = 1.0;
 		}
 		auto point = curve.Evaluate(t);
 
-		size_t segmentIndex = i * (path.size() - 1) / segments;
-		double safetyScore = EvaluateSegmentSafety({ path[segmentIndex], path[segmentIndex + 1] });
-		double segmentTime = CalculateSegmentTime(safetyScore);
+		const size_t segmentIndex = i * (path.size() - 1) / segmentsCount;
+		const double safetyScore = EvaluateSegmentSafety({ path[segmentIndex], path[segmentIndex + 1] });
+		const double segmentTime = CalculateSegmentTime(safetyScore);
 
-		totalTime += segmentTime / segments;
+		totalTime += segmentTime / segmentsCount;
 
 		smoothPathWithSpeed.push_back({ point[0], point[1], point[2], totalTime });
 	}
@@ -91,7 +92,7 @@ bool IsVerticalTransitionAllowed(const Coords& coords)
 }
 } // namespace
 
-CGrid::CGrid(int sizeX, int sizeY, int sizeZ, double layerHeight, double droneRadius, double k, double cellLength)
+Grid::Grid(const int sizeX, const int sizeY, const int sizeZ, const double layerHeight, const double droneRadius, const double k, const double cellLength)
 	: m_gridSizeX(sizeX)
 	, m_gridSizeY(sizeY)
 	, m_gridSizeZ(sizeZ)
@@ -102,7 +103,7 @@ CGrid::CGrid(int sizeX, int sizeY, int sizeZ, double layerHeight, double droneRa
 {
 	m_cells.resize(
 		m_gridSizeX,
-		std::vector<std::vector<CCell>>(m_gridSizeY, std::vector<CCell>(m_gridSizeZ, CCell({ 0, 0, 0 }, cellLength))));
+		std::vector(m_gridSizeY, std::vector(m_gridSizeZ, Cell({ 0, 0, 0 }, cellLength))));
 
 	for (int x = 0; x < m_gridSizeX; ++x)
 	{
@@ -110,14 +111,14 @@ CGrid::CGrid(int sizeX, int sizeY, int sizeZ, double layerHeight, double droneRa
 		{
 			for (int z = 0; z < m_gridSizeZ; ++z)
 			{
-				m_cells[x][y][z] = CCell(Coords{ x, y, z }, cellLength);
+				m_cells[x][y][z] = Cell(Coords{ x, y, z }, cellLength);
 			}
 		}
 	}
 	InitializeConnections();
 }
 
-CGrid::CGrid(const CGrid& other)
+Grid::Grid(const Grid& other)
 	: m_gridSizeX(other.m_gridSizeX)
 	, m_gridSizeY(other.m_gridSizeY)
 	, m_gridSizeZ(other.m_gridSizeZ)
@@ -129,7 +130,7 @@ CGrid::CGrid(const CGrid& other)
 {
 }
 
-CGrid::CGrid(CGrid&& other) noexcept
+Grid::Grid(Grid&& other) noexcept
 	: m_gridSizeX(std::exchange(other.m_gridSizeX, 0))
 	, m_gridSizeY(std::exchange(other.m_gridSizeY, 0))
 	, m_gridSizeZ(std::exchange(other.m_gridSizeZ, 0))
@@ -141,17 +142,17 @@ CGrid::CGrid(CGrid&& other) noexcept
 {
 }
 
-CGrid& CGrid::operator=(const CGrid& other)
+Grid& Grid::operator=(const Grid& other)
 {
 	if (this != &other)
 	{
-		CGrid temp(other);
+		Grid temp(other);
 		Swap(*this, temp);
 	}
 	return *this;
 }
 
-CGrid& CGrid::operator=(CGrid&& other) noexcept
+Grid& Grid::operator=(Grid&& other) noexcept
 {
 	if (this != &other)
 	{
@@ -167,13 +168,13 @@ CGrid& CGrid::operator=(CGrid&& other) noexcept
 	return *this;
 }
 
-void CGrid::AddObstacle(const CObstacle& obstacle)
+void Grid::AddObstacle(const Obstacle& obstacle)
 {
 	m_obstacles.push_back(obstacle);
 	UpdateCosts();
 }
 
-std::vector<std::array<double, 4>> CGrid::FindPath(CCell* start, CCell* goal)
+std::vector<std::array<double, 4>> Grid::FindPath(Cell* start, Cell* goal)
 {
 	if (!IsCellInGrid(start) || !IsCellInGrid(goal))
 	{
@@ -181,39 +182,37 @@ std::vector<std::array<double, 4>> CGrid::FindPath(CCell* start, CCell* goal)
 	}
 
 	std::priority_queue<NodeWithPriority> openSet;
-	std::unordered_set<CCell*> closedSet;
-	std::unordered_map<CCell*, CCell*> cameFrom;
-	std::unordered_map<CCell*, double> gScore;
+	std::unordered_set<Cell*> closedSet;
+	std::unordered_map<Cell*, Cell*> cameFrom;
+	std::unordered_map<Cell*, double> gScore;
 
 	gScore[start] = 0;
-	double startF = Heuristic(*start, *goal);
+	const double startF = Heuristic(*start, *goal);
 	openSet.push({ start, startF });
 
 	while (!openSet.empty())
 	{
-		CCell* current = openSet.top().cell;
+		Cell* current = openSet.top().cell;
 		openSet.pop();
 
 		if (current == goal)
 		{
-			std::vector<CCell*> path;
+			std::vector<Cell*> path;
 			auto currentPtr = current;
 			while (currentPtr)
 			{
 				path.push_back(currentPtr);
 				currentPtr = cameFrom[currentPtr];
 			}
-			std::reverse(path.begin(), path.end());
+			std::ranges::reverse(path);
 			return SmoothPath(path, m_cellLength);
 		}
 
 		closedSet.insert(current);
 
-		for (CCell* neighbor : GetValidNeighbors(current))
+		for (Cell* neighbor : GetValidNeighbors(current))
 		{
-			double tentativeG = gScore[current] + neighbor->GetCost();
-
-			if (gScore.find(neighbor) == gScore.end() || tentativeG < gScore[neighbor])
+			if (const double tentativeG = gScore[current] + neighbor->GetCost(); !gScore.contains(neighbor) || tentativeG < gScore[neighbor])
 			{
 				cameFrom[neighbor] = current;
 				gScore[neighbor] = tentativeG;
@@ -226,16 +225,20 @@ std::vector<std::array<double, 4>> CGrid::FindPath(CCell* start, CCell* goal)
 	return {};
 }
 
-bool CGrid::IsCellInGrid(CCell* cell) const
+bool Grid::IsCellInGrid(const Cell* cell) const
 {
-	auto coords = cell->GetCoords();
-	return coords.x >= 0 && coords.x < m_gridSizeX && coords.y >= 0 && coords.y < m_gridSizeY && coords.z >= 0 && coords.z < m_gridSizeZ;
+	if (!cell)
+	{
+		return false;
+	}
+	const auto [x, y, z] = cell->GetCoords();
+	return x >= 0 && x < m_gridSizeX && y >= 0 && y < m_gridSizeY && z >= 0 && z < m_gridSizeZ;
 }
 
-std::vector<CCell*> CGrid::GetValidNeighbors(CCell* cell)
+std::vector<Cell*> Grid::GetValidNeighbors(const Cell* cell)
 {
-	std::vector<CCell*> neighbors;
-	auto coords = cell->GetCoords();
+	std::vector<Cell*> neighbors;
+	const auto coords = cell->GetCoords();
 
 	for (int dx = -1; dx <= 1; ++dx)
 	{
@@ -246,14 +249,13 @@ std::vector<CCell*> CGrid::GetValidNeighbors(CCell* cell)
 				continue;
 			}
 
-			int newX = coords.x + dx;
-			int newY = coords.y + dy;
-			int newZ = coords.z;
+			const int newX = coords.x + dx;
+			const int newY = coords.y + dy;
+			const int newZ = coords.z;
 
 			if (newX >= 0 && newX < m_gridSizeX && newY >= 0 && newY < m_gridSizeY && newZ >= 0 && newZ < m_gridSizeZ)
 			{
-				CCell* neighbor = &m_cells[newX][newY][newZ];
-				if (neighbor->GetCost() != 254.0)
+				if (Cell* neighbor = &m_cells[newX][newY][newZ]; neighbor->GetCost() != 254.0)
 					neighbors.push_back(neighbor);
 			}
 		}
@@ -263,11 +265,9 @@ std::vector<CCell*> CGrid::GetValidNeighbors(CCell* cell)
 	{
 		for (int dz = -1; dz <= 1; dz += 2)
 		{
-			int nz = coords.z + dz;
-			if (nz >= 0 && nz < m_gridSizeZ)
+			if (const int nz = coords.z + dz; nz >= 0 && nz < m_gridSizeZ)
 			{
-				CCell* neighbor = &m_cells[coords.x][coords.y][nz];
-				if (neighbor->GetCost() != 254.0)
+				if (Cell* neighbor = &m_cells[coords.x][coords.y][nz]; neighbor->GetCost() != 254.0)
 					neighbors.push_back(neighbor);
 			}
 		}
@@ -276,17 +276,17 @@ std::vector<CCell*> CGrid::GetValidNeighbors(CCell* cell)
 	return neighbors;
 }
 
-[[nodiscard]] std::vector<std::vector<std::vector<CCell>>>& CGrid::GetCells()
+[[nodiscard]] std::vector<std::vector<std::vector<Cell>>>& Grid::GetCells()
 {
 	return m_cells;
 }
 
-std::vector<CObstacle> CGrid::GetObstacles() const
+std::vector<Obstacle> Grid::GetObstacles() const
 {
 	return m_obstacles;
 }
 
-void CGrid::InitializeConnections()
+void Grid::InitializeConnections()
 {
 	for (int x = 0; x < m_gridSizeX; ++x)
 	{
@@ -311,7 +311,7 @@ void CGrid::InitializeConnections()
 	}
 }
 
-void CGrid::UpdateCosts()
+void Grid::UpdateCosts()
 {
 	for (int x = 0; x < m_gridSizeX; ++x)
 	{
@@ -325,7 +325,7 @@ void CGrid::UpdateCosts()
 	}
 }
 
-double CGrid::CalculateCellCost(int x, int y, int z)
+double Grid::CalculateCellCost(int x, int y, int z) const
 {
 	double minDistance = std::numeric_limits<double>::max();
 	for (const auto& obstacle : m_obstacles)
@@ -335,12 +335,11 @@ double CGrid::CalculateCellCost(int x, int y, int z)
 			return 254.0;
 		}
 
-		double dx = std::max({ (double)(obstacle.GetXMin() - x), 0.0, (double)(x - obstacle.GetXMax()) });
-		double dy = std::max({ (double)(obstacle.GetYMin() - y), 0.0, (double)(y - obstacle.GetYMax()) });
-		double dz = std::max({ (double)(obstacle.GetZMin() - z), 0.0, (double)(z - obstacle.GetZMax()) });
-		double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+		const double dx = std::max({ static_cast<double>(obstacle.GetXMin() - x), 0.0, static_cast<double>(x - obstacle.GetXMax()) });
+		const double dy = std::max({ static_cast<double>(obstacle.GetYMin() - y), 0.0, static_cast<double>(y - obstacle.GetYMax()) });
+		const double dz = std::max({ static_cast<double>(obstacle.GetZMin() - z), 0.0, static_cast<double>(z - obstacle.GetZMax()) });
 
-		if (distance < minDistance)
+		if (const double distance = std::sqrt(dx * dx + dy * dy + dz * dz); distance < minDistance)
 		{
 			minDistance = distance;
 		}
@@ -357,19 +356,19 @@ double CGrid::CalculateCellCost(int x, int y, int z)
 	return cost;
 }
 
-double CGrid::Heuristic(const CCell& a, const CCell& b) const
+double Grid::Heuristic(const Cell& a, const Cell& b) const
 {
-	Coords aCoords = a.GetCoords();
-	Coords bCoords = b.GetCoords();
-	double dx = (aCoords.x - bCoords.x) * m_cellLength;
-	double dy = (aCoords.y - bCoords.y) * m_cellLength;
-	double dz = (aCoords.z - bCoords.z) * m_layerHeight;
+	const auto [aX, aY, aZ] = a.GetCoords();
+	const auto [bX, bY, bZ] = b.GetCoords();
+	const double dx = (aX - bX) * m_cellLength;
+	const double dy = (aY - bY) * m_cellLength;
+	const double dz = (aZ - bZ) * m_layerHeight;
 
-	const double fv = 2.0;
+	constexpr double fv = 2.0;
 	return std::sqrt(dx * dx + dy * dy + (dz * fv) * (dz * fv));
 }
 
-void CGrid::Swap(CGrid& lhs, CGrid& rhs) noexcept
+void Grid::Swap(Grid& lhs, Grid& rhs) noexcept
 {
 	std::swap(lhs.m_gridSizeX, rhs.m_gridSizeX);
 	std::swap(lhs.m_gridSizeY, rhs.m_gridSizeY);

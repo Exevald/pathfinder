@@ -1,8 +1,7 @@
 #include "CGridViewModel.h"
 #include "../Service/CObjLoader.h"
-#include "C3dsLoader.h"
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 
 namespace
 {
@@ -21,20 +20,13 @@ std::string GetFileExtension(const std::string& filePath)
 
 std::unique_ptr<IMeshLoader> CreateMeshLoader(const std::string& filePath)
 {
-	std::string extension = GetFileExtension(filePath);
+	const std::string extension = GetFileExtension(filePath);
 
 	if (extension == "obj")
 	{
 		return std::make_unique<CObjLoader>(filePath.c_str());
 	}
-	else if (extension == "3ds")
-	{
-		return std::make_unique<C3dsLoader>(filePath.c_str());
-	}
-	else
-	{
-		throw std::runtime_error("Unsupported file format: " + extension);
-	}
+	throw std::runtime_error("Unsupported file format: " + extension);
 }
 } // namespace
 
@@ -52,7 +44,7 @@ void CGridViewModel::LoadData(const std::string& filePath)
 		auto fileLoader = CFileLoader(std::move(meshLoader));
 		m_fileLoader = std::move(fileLoader);
 
-		m_grid = std::make_unique<CGrid>(m_fileLoader.LoadAndConvert());
+		m_grid = std::make_unique<Grid>(m_fileLoader.LoadAndConvert());
 	}
 	catch (const std::exception& e)
 	{
@@ -60,7 +52,7 @@ void CGridViewModel::LoadData(const std::string& filePath)
 	}
 }
 
-[[nodiscard]] CGrid* CGridViewModel::GetGrid() const
+[[nodiscard]] Grid* CGridViewModel::GetGrid() const
 {
 	return m_grid.get();
 }

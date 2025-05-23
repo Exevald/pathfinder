@@ -1,15 +1,17 @@
 #include "CFileLoader.h"
 
+#include <cmath>
+
 CFileLoader::CFileLoader(std::unique_ptr<IMeshLoader> meshLoader)
 	: m_meshLoader(std::move(meshLoader))
 {
 }
 
-CGrid CFileLoader::LoadAndConvert()
+Grid CFileLoader::LoadAndConvert()
 {
 	auto meshes = m_meshLoader->GetMeshes();
 
-	CBoundingBox totalBoundingBox;
+	BoundingBox totalBoundingBox;
 	for (const auto& mesh : meshes)
 	{
 		const auto& meshBoundingBox = mesh.GetBoundingBox();
@@ -30,12 +32,12 @@ CGrid CFileLoader::LoadAndConvert()
 	int gridSizeY = static_cast<int>(std::ceil(maxCoord.y - minCoord.y));
 	int gridSizeZ = static_cast<int>(std::ceil(maxCoord.z - minCoord.z));
 
-	CGrid grid(gridSizeX, gridSizeY, gridSizeZ, 1.0, 0.5, 1.0, 1.0);
+	Grid grid(gridSizeX, gridSizeY, gridSizeZ, 1.0, 0.5, 1.0, 1.0);
 
 	for (const auto& mesh : meshes)
 	{
 		const auto& boundingBox = mesh.GetBoundingBox();
-		CObstacle obstacle(
+		Obstacle obstacle(
 			static_cast<int>(boundingBox.GetMinCoord().x),
 			static_cast<int>(boundingBox.GetMaxCoord().x),
 			static_cast<int>(boundingBox.GetMinCoord().y),

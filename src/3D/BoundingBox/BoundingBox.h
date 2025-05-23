@@ -1,15 +1,15 @@
 #pragma once
 
-#include "CVector3.h"
+#include "../Vector3.h"
 
-class CBoundingBox
+class BoundingBox
 {
 public:
-	CBoundingBox();
-	CBoundingBox(const CVector3f& minCoord, const CVector3f& maxCoord);
+	BoundingBox();
+	BoundingBox(const CVector3f& minCoord, const CVector3f& maxCoord);
 
 	[[nodiscard]] bool IsEmpty() const;
-	[[nodiscard]] CBoundingBox Union(const CBoundingBox& other) const;
+	[[nodiscard]] BoundingBox Union(const BoundingBox& other) const;
 
 	[[nodiscard]] const CVector3f& GetMinCoord() const;
 	[[nodiscard]] const CVector3f& GetMaxCoord() const;

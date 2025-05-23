@@ -4,12 +4,14 @@ add_subdirectory(Model)
 add_subdirectory(View)
 add_subdirectory(ViewModel)
 add_subdirectory(Service)
+add_subdirectory(3D)
 
 target_link_libraries(pathfinder PRIVATE
         Model
         View
         ViewModel
         Service
+        3D
         Qt6::OpenGL
         Qt6::Widgets
         Qt6::Gui

@@ -1,20 +1,21 @@
 #pragma once
 
+#include "IMeshLoader.h"
 #include <vector>
 
-class MockMeshLoader : public IMeshLoader
+class MockMeshLoader final : public IMeshLoader
 {
 public:
-	void SetMeshes(const std::vector<CMesh>& meshes)
+	void SetMeshes(const std::vector<Mesh>& meshes)
 	{
 		m_meshes = meshes;
 	}
 
-	[[nodiscard]] std::vector<CMesh> GetMeshes() const override
+	[[nodiscard]] std::vector<Mesh> GetMeshes() const override
 	{
 		return m_meshes;
 	}
 
 private:
-	std::vector<CMesh> m_meshes;
+	std::vector<Mesh> m_meshes;
 };

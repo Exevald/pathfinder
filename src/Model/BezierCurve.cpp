@@ -1,11 +1,11 @@
-#include "CBezierCurve.h"
+#include "BezierCurve.h"
 
-CBezierCurve::CBezierCurve(const std::vector<std::array<double, 3>>& controlPoints)
+BezierCurve::BezierCurve(const std::vector<std::array<double, 3>>& controlPoints)
 	: m_controlPoints(controlPoints)
 {
 }
 
-std::array<double, 3> CBezierCurve::Evaluate(double t) const
+std::array<double, 3> BezierCurve::Evaluate(double t) const
 {
 	std::vector<std::array<double, 3>> points = m_controlPoints;
 	auto n = points.size();

@@ -1,4 +1,4 @@
-#include "../src/Model/CBezierCurve.h"
+#include "../src/Model/BezierCurve.h"
 #include <gtest/gtest.h>
 
 TEST(BezierCurve, TestEvaluateAtEndpoints)
@@ -9,7 +9,7 @@ TEST(BezierCurve, TestEvaluateAtEndpoints)
 		{ 10.0, 10.0, 10.0 }
 	};
 
-	CBezierCurve curve(controlPoints);
+	BezierCurve curve(controlPoints);
 
 	auto start = curve.Evaluate(0.0);
 	EXPECT_DOUBLE_EQ(start[0], 0.0);

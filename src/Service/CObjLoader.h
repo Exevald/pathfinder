@@ -9,7 +9,7 @@ class CObjLoader final : public IMeshLoader
 {
 public:
 	explicit CObjLoader(const char* fileName);
-	[[nodiscard]] std::vector<CMesh> GetMeshes() const override;
+	[[nodiscard]] std::vector<Mesh> GetMeshes() const override;
 
 private:
 	tinyobj::attrib_t m_attrib;

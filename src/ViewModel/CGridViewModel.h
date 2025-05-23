@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CFileLoader.h"
-#include "CGrid.h"
+#include "Grid.h"
 #include <memory>
 #include <string>
 
@@ -11,9 +11,9 @@ public:
 	CGridViewModel();
 
 	void LoadData(const std::string& filePath);
-	[[nodiscard]] CGrid* GetGrid() const;
+	[[nodiscard]] Grid* GetGrid() const;
 
 private:
 	CFileLoader m_fileLoader;
-	std::unique_ptr<CGrid> m_grid;
+	std::unique_ptr<Grid> m_grid;
 };

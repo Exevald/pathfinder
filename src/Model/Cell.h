@@ -9,15 +9,16 @@ struct Coords
 	int z;
 };
 
-class CCell {
+class Cell
+{
 public:
-	explicit CCell(Coords coords, double cellLength);
+	explicit Cell(Coords coords, double cellLength);
 
-	void AddConnection(CCell* neighbor);
+	void AddConnection(Cell* neighbor);
 	void SetCost(double cost);
 
 	[[nodiscard]] Coords GetCoords() const;
-	[[nodiscard]] const std::vector<CCell*>& GetConnections() const;
+	[[nodiscard]] const std::vector<Cell*>& GetConnections() const;
 	[[nodiscard]] double GetCost() const;
 	[[nodiscard]] double GetCellLength() const;
 
@@ -25,5 +26,5 @@ private:
 	Coords m_coords;
 	double m_cellLength;
 	double m_cost;
-	std::vector<CCell*> m_connections;
+	std::vector<Cell*> m_connections;
 };

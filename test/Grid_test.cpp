@@ -1,4 +1,4 @@
-#include "../src/Model/CGrid.h"
+#include "../src/Model/Grid.h"
 #include <gtest/gtest.h>
 #include <queue>
 #include <unordered_set>
@@ -10,7 +10,7 @@ TEST(Grid, TestGridInitialization)
 	double droneRadius = 0.5;
 	double k = 1.0;
 
-	CGrid grid(gridSizeX, gridSizeY, gridSizeZ, layerHeight, droneRadius, k, 1);
+	Grid grid(gridSizeX, gridSizeY, gridSizeZ, layerHeight, droneRadius, k, 1);
 
 	EXPECT_EQ(grid.GetCells().size(), gridSizeX);
 	EXPECT_EQ(grid.GetCells()[0].size(), gridSizeY);
@@ -27,9 +27,8 @@ TEST(Grid, TestObstacleCostCalculation)
 	double droneRadius = 0.5;
 	double k = 1.0;
 
-	CGrid grid(gridSizeX, gridSizeY, gridSizeZ, layerHeight, droneRadius, k, 1);
-
-	grid.AddObstacle(CObstacle(2, 4, 2, 4, 0, 2));
+	Grid grid(gridSizeX, gridSizeY, gridSizeZ, layerHeight, droneRadius, k, 1);
+	grid.AddObstacle(Obstacle(2, 4, 2, 4, 0, 2));
 
 	EXPECT_EQ(grid.GetCells()[2][2][0].GetCost(), 254.0);
 	EXPECT_EQ(grid.GetCells()[4][4][2].GetCost(), 254.0);
@@ -43,11 +42,11 @@ TEST(Grid, TestObstacleCostCalculation)
 
 TEST(Grid, TestFindPathWithSmoothTrajectory)
 {
-	CGrid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
-	grid.AddObstacle(CObstacle(2, 4, 2, 4, 0, 2));
+	Grid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
+	grid.AddObstacle(Obstacle(2, 4, 2, 4, 0, 2));
 
-	CCell* start = &grid.GetCells()[0][0][0];
-	CCell* goal = &grid.GetCells()[9][9][4];
+	Cell* start = &grid.GetCells()[0][0][0];
+	Cell* goal = &grid.GetCells()[9][9][4];
 
 	std::vector<std::array<double, 4>> smoothPath = grid.FindPath(start, goal);
 
@@ -58,11 +57,11 @@ TEST(Grid, TestFindPathWithSmoothTrajectory)
 
 TEST(Grid, TestPathBlockedByObstacle)
 {
-	CGrid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
-	grid.AddObstacle(CObstacle(0, 9, 0, 9, 0, 5));
+	Grid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
+	grid.AddObstacle(Obstacle(0, 9, 0, 9, 0, 5));
 
-	CCell* start = &grid.GetCells()[0][0][0];
-	CCell* goal = &grid.GetCells()[9][9][4];
+	Cell* start = &grid.GetCells()[0][0][0];
+	Cell* goal = &grid.GetCells()[9][9][4];
 
 	std::vector<std::array<double, 4>> smoothPath = grid.FindPath(start, goal);
 
@@ -71,11 +70,11 @@ TEST(Grid, TestPathBlockedByObstacle)
 
 TEST(Grid, TestPathThroughMultipleLayers)
 {
-	CGrid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
-	grid.AddObstacle(CObstacle(2, 4, 2, 4, 0, 2));
+	Grid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
+	grid.AddObstacle(Obstacle(2, 4, 2, 4, 0, 2));
 
-	CCell* start = &grid.GetCells()[0][0][0];
-	CCell* goal = &grid.GetCells()[9][9][4];
+	Cell* start = &grid.GetCells()[0][0][0];
+	Cell* goal = &grid.GetCells()[9][9][4];
 
 	std::vector<std::array<double, 4>> smoothPath = grid.FindPath(start, goal);
 
@@ -86,10 +85,10 @@ TEST(Grid, TestPathThroughMultipleLayers)
 
 TEST(Grid, TestSmallGrid)
 {
-	CGrid grid(3, 3, 3, 2.0, 0.5, 1.0, 1);
+	Grid grid(3, 3, 3, 2.0, 0.5, 1.0, 1);
 
-	CCell* start = &grid.GetCells()[0][0][0];
-	CCell* goal = &grid.GetCells()[2][2][2];
+	Cell* start = &grid.GetCells()[0][0][0];
+	Cell* goal = &grid.GetCells()[2][2][2];
 
 	std::vector<std::array<double, 4>> smoothPath = grid.FindPath(start, goal);
 
@@ -100,10 +99,10 @@ TEST(Grid, TestSmallGrid)
 
 TEST(Grid, TestStartAndGoalAreSame)
 {
-	CGrid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
+	Grid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
 
-	CCell* start = &grid.GetCells()[5][5][2];
-	CCell* goal = &grid.GetCells()[5][5][2];
+	Cell* start = &grid.GetCells()[5][5][2];
+	Cell* goal = &grid.GetCells()[5][5][2];
 
 	std::vector<std::array<double, 4>> smoothPath = grid.FindPath(start, goal);
 
@@ -112,10 +111,10 @@ TEST(Grid, TestStartAndGoalAreSame)
 
 TEST(Grid, TestGoalOnBoundary)
 {
-	CGrid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
+	Grid grid(10, 10, 5, 2.0, 0.5, 1.0, 1);
 
-	CCell* start = &grid.GetCells()[0][0][0];
-	CCell* goal = &grid.GetCells()[9][9][4];
+	Cell* start = &grid.GetCells()[0][0][0];
+	Cell* goal = &grid.GetCells()[9][9][4];
 
 	std::vector<std::array<double, 4>> smoothPath = grid.FindPath(start, goal);
 

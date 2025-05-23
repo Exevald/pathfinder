@@ -1,9 +1,9 @@
 #pragma once
 
-class CObstacle
+class Obstacle
 {
 public:
-	CObstacle(int xMin, int xMax, int yMin, int yMax, int zMin, int zMax);
+	Obstacle(int xMin, int xMax, int yMin, int yMax, int zMin, int zMax);
 
 	[[nodiscard]] int GetXMin() const;
 	[[nodiscard]] int GetXMax() const;

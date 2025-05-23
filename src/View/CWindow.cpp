@@ -3,7 +3,6 @@
 #include <QFileDialog>
 #include <QGraphicsRectItem>
 #include <QLabel>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 
@@ -25,8 +24,6 @@ void CWindow::ShowMainMenu()
 
 	auto* layout = new QVBoxLayout(centralWidget);
 	layout->setContentsMargins(50, 100, 0, 0);
-
-	auto* leftLayout = new QVBoxLayout();
 
 	auto* titleLabel = new QLabel("Pathfinder", this);
 	titleLabel->setStyleSheet(
@@ -84,9 +81,9 @@ void CWindow::ShowMainMenu()
 	layout->addWidget(exitButton, 0, Qt::AlignLeft);
 	layout->addStretch();
 
-	auto iconLabel = new QLabel(this);
-	QPixmap originalPixmap("../Compass.svg");
-	QPixmap scaledPixmap = originalPixmap.scaled(650, 650, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+	const auto iconLabel = new QLabel(this);
+	const QPixmap originalPixmap("../../Compass.svg");
+	const QPixmap scaledPixmap = originalPixmap.scaled(650, 650, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 	iconLabel->setPixmap(scaledPixmap);
 	iconLabel->setAlignment(Qt::AlignRight);
 	layout->addWidget(iconLabel);
@@ -96,7 +93,7 @@ void CWindow::ShowMainMenu()
 
 void CWindow::OnOpenCADFile()
 {
-	QString filePath = QFileDialog::getOpenFileName(
+	const QString filePath = QFileDialog::getOpenFileName(
 		this,
 		"Выберите CAD-файл",
 		"",
