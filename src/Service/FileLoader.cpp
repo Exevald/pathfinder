@@ -1,15 +1,15 @@
-#include "CFileLoader.h"
+#include "FileLoader.h"
 
 #include <cmath>
 
-CFileLoader::CFileLoader(std::unique_ptr<IMeshLoader> meshLoader)
+FileLoader::FileLoader(std::unique_ptr<IMeshLoader> meshLoader)
 	: m_meshLoader(std::move(meshLoader))
 {
 }
 
-Grid CFileLoader::LoadAndConvert()
+Grid FileLoader::LoadAndConvert() const
 {
-	auto meshes = m_meshLoader->GetMeshes();
+	const auto meshes = m_meshLoader->GetMeshes();
 
 	BoundingBox totalBoundingBox;
 	for (const auto& mesh : meshes)

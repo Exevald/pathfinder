@@ -1,19 +1,19 @@
 #pragma once
 
-#include "CFileLoader.h"
-#include "Grid.h"
+#include "../Service/FileLoader.h"
+#include "../Model/Grid.h"
 #include <memory>
 #include <string>
 
-class CGridViewModel
+class GridViewModel
 {
 public:
-	CGridViewModel();
+	GridViewModel();
 
 	void LoadData(const std::string& filePath);
 	[[nodiscard]] Grid* GetGrid() const;
 
 private:
-	CFileLoader m_fileLoader;
+	FileLoader m_fileLoader;
 	std::unique_ptr<Grid> m_grid;
 };

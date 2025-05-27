@@ -2,45 +2,36 @@
 
 Material::Material()
 {
-	SetDiffuse(1, 1, 1);
-	SetAmbient(0.2f, 0.2f, 0.2f);
-	SetSpecular(1, 1, 1);
+	SetDiffuse(1, 1, 1, 1);
+	SetAmbient(0.2f, 0.2f, 0.2f, 1);
+	SetSpecular(1, 1, 1, 1);
 	SetShininess(0);
 }
 
-void Material::SetDiffuse(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+void Material::SetDiffuse(float r, float g, float b, float a)
 {
-	m_diffuse[0] = r;
-	m_diffuse[1] = g;
-	m_diffuse[2] = b;
-	m_diffuse[3] = a;
+	m_diffuse = QVector4D(r, g, b, a);
 }
 
-void Material::SetAmbient(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+void Material::SetAmbient(float r, float g, float b, float a)
 {
-	m_ambient[0] = r;
-	m_ambient[1] = g;
-	m_ambient[2] = b;
-	m_diffuse[3] = a;
+	m_ambient = QVector4D(r, g, b, a);
 }
 
-void Material::SetSpecular(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+void Material::SetSpecular(float r, float g, float b, float a)
 {
-	m_specular[0] = r;
-	m_specular[1] = g;
-	m_specular[2] = b;
-	m_specular[3] = a;
+	m_specular = QVector4D(r, g, b, a);
 }
 
-void Material::SetShininess(GLfloat shininess)
+void Material::SetShininess(float shininess)
 {
 	m_shininess = shininess;
 }
 
-void Material::Activate(GLenum side) const
+void Material::Apply(QOpenGLShaderProgram* program, const QString& uniformPrefix) const
 {
-	glMaterialfv(side, GL_DIFFUSE, m_diffuse);
-	glMaterialfv(side, GL_AMBIENT, m_ambient);
-	glMaterialfv(side, GL_SPECULAR, m_specular);
-	glMaterialf(side, GL_SHININESS, m_shininess);
+	program->setUniformValue((uniformPrefix + ".diffuse").toUtf8().constData(), m_diffuse);
+	program->setUniformValue((uniformPrefix + ".ambient").toUtf8().constData(), m_ambient);
+	program->setUniformValue((uniformPrefix + ".specular").toUtf8().constData(), m_specular);
+	program->setUniformValue((uniformPrefix + ".shininess").toUtf8().constData(), m_shininess);
 }

@@ -1,21 +1,24 @@
 #pragma once
-#include <GL/glew.h>
+
+#include <QOpenGLShaderProgram>
+#include <QVector4D>
 
 class Light
 {
 public:
-	virtual void SetLight(GLenum light) const;
-	void SetDiffuseIntensity(GLfloat r, GLfloat g, GLfloat b, GLfloat a = 1);
-	void SetAmbientIntensity(GLfloat r, GLfloat g, GLfloat b, GLfloat a = 1);
-	void SetSpecularIntensity(GLfloat r, GLfloat g, GLfloat b, GLfloat a = 1);
+	Light();
+
+	void SetDiffuseIntensity(float r, float g, float b, float a = 1.0f);
+	void SetAmbientIntensity(float r, float g, float b, float a = 1.0f);
+	void SetSpecularIntensity(float r, float g, float b, float a = 1.0f);
+
+	// Передать параметры света в шейдер
+	virtual void SetUniforms(QOpenGLShaderProgram* program, const QString& uniformPrefix) const;
 
 	virtual ~Light() = default;
 
 protected:
-	Light();
-
-private:
-	GLfloat m_diffuse[4]{};
-	GLfloat m_ambient[4]{};
-	GLfloat m_specular[4]{};
+	QVector4D m_diffuse;
+	QVector4D m_ambient;
+	QVector4D m_specular;
 };

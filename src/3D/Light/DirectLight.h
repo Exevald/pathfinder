@@ -1,14 +1,18 @@
 #pragma once
-#include "Light.h"
-#include "Vector3.h"
 
-class DirectLight final : public Light
+#include "Light.h"
+#include <QVector3D>
+
+class DirectLight : public Light
 {
 public:
-	explicit DirectLight(CVector3f const& lightDirection = CVector3f(0, 0, 1));
+	explicit DirectLight(const QVector3D& direction = QVector3D(0, 0, 1));
 
-	void SetDirection(CVector3f const& direction);
-	void SetLight(GLenum light)const override;
+	void SetDirection(const QVector3D& direction);
+
+	// Передать параметры света и направление в шейдер
+	void SetUniforms(QOpenGLShaderProgram* program, const QString& uniformPrefix) const override;
+
 private:
-	CVector3f m_direction;
+	QVector3D m_direction;
 };

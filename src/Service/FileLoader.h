@@ -4,11 +4,11 @@
 #include "IMeshLoader.h"
 #include <memory>
 
-class CFileLoader
+class FileLoader
 {
 public:
-	explicit CFileLoader(std::unique_ptr<IMeshLoader> meshLoader);
-	Grid LoadAndConvert();
+	explicit FileLoader(std::unique_ptr<IMeshLoader> meshLoader);
+	Grid LoadAndConvert() const;
 
 private:
 	std::unique_ptr<IMeshLoader> m_meshLoader;

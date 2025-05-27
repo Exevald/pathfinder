@@ -1,29 +1,21 @@
 #pragma once
-#include <GL/gl.h>
+#include <QOpenGLShaderProgram>
 
 class Material
 {
 public:
 	Material();
 
-	// Коэффициент диффузного отражения
-	void SetDiffuse(GLfloat r, GLfloat g, GLfloat b, GLfloat a = 1);
+	void SetDiffuse(float r, float g, float b, float a = 1.0f);
+	void SetAmbient(float r, float g, float b, float a = 1.0f);
+	void SetSpecular(float r, float g, float b, float a = 1.0f);
+	void SetShininess(float shininess);
 
-	// Коэффициент фонового отражения
-	void SetAmbient(GLfloat r, GLfloat g, GLfloat b, GLfloat a = 1);
-
-	// Коэффициент зеркального отражения
-	void SetSpecular(GLfloat r, GLfloat g, GLfloat b, GLfloat a = 1);
-
-	// Степень зеркального отражения (для модели Фонга)
-	void SetShininess(GLfloat shininess);
-
-	// Делаем материал активным для заданной грани объекта
-	void Activate(GLenum side = GL_FRONT) const;
+	void Apply(QOpenGLShaderProgram* program, const QString& uniformPrefix = "material") const;
 
 private:
-	GLfloat m_shininess{};
-	GLfloat m_diffuse[4]{};
-	GLfloat m_specular[4]{};
-	GLfloat m_ambient[4]{};
+	float m_shininess{};
+	QVector4D m_diffuse;
+	QVector4D m_specular;
+	QVector4D m_ambient;
 };

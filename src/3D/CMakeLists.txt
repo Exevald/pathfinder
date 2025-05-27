@@ -14,6 +14,7 @@ add_library(3D STATIC
         Material/Material.cpp
         Material/Material.h
         Model/Model.h
+        Model/Model.cpp
         Texture/Texture.h
         Texture/TextureMap.cpp
         Texture/TextureMap.h
@@ -21,6 +22,24 @@ add_library(3D STATIC
         Rotation/RotationController.h
         Material/ModelMaterial.cpp
         Material/ModelMaterial.h
+        Texture/TextureLoader.cpp
+        Texture/TextureLoader.h
 )
 
-target_include_directories(3D PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(3D
+        PRIVATE
+        SOIL
+        Qt6::Core
+        Qt6::Gui
+        Qt6::OpenGL
+)
+
+target_include_directories(3D 
+    PUBLIC 
+        ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE
+        ${Qt6Core_INCLUDE_DIRS}
+        ${Qt6Gui_INCLUDE_DIRS}
+        ${Qt6OpenGL_INCLUDE_DIRS}
+        ${Qt6OpenGLWidgets_INCLUDE_DIRS}
+)

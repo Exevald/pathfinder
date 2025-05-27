@@ -1,139 +1,123 @@
 #pragma once
-#include <GL/gl.h>
+
+#include <QOpenGLTexture>
+#include <memory>
 #include <cassert>
 
 class BaseTexture
 {
 public:
-	// Генерируем имя для текстурного объекта
-	void Create()
-	{
-		assert(!m_texture);
-		glGenTextures(1, &m_texture);
-	}
+    BaseTexture()
+        : m_texture(nullptr)
+    {}
 
-	// Удаляем текстурный объект
-	void Delete()
-	{
-		if (m_texture)
-		{
-			glDeleteTextures(1, &m_texture);
-			m_texture = 0;
-		}
-	}
+    explicit BaseTexture(QOpenGLTexture::Target target)
+        : m_texture(std::make_unique<QOpenGLTexture>(target))
+    {}
 
-	// Отвязываемся от текстурного объекта и возвращаем его идентификатор
-	GLuint Detach()
-	{
-		GLuint texture = m_texture;
-		m_texture = 0;
-		return texture;
-	}
+    // Генерируем текстурный объект
+    void Create(QOpenGLTexture::Target target)
+    {
+        assert(!m_texture);
+        m_texture = std::make_unique<QOpenGLTexture>(target);
+    }
 
-	// Получаем идентификатор текстурного объекта
-	operator GLuint() const
-	{
-		return m_texture;
-	}
+    // Удаляем текстурный объект
+    void Delete()
+    {
+        m_texture.reset();
+    }
 
-	// Делаем объект активным
-	void BindTo(GLenum target) const
-	{
-		assert(m_texture != 0);
-		glBindTexture(target, m_texture);
-	}
+    // Отвязываемся от текстурного объекта и возвращаем указатель на него
+    std::unique_ptr<QOpenGLTexture> Detach()
+    {
+        return std::move(m_texture);
+    }
 
-	BaseTexture(BaseTexture const&) = delete;
-	BaseTexture& operator=(BaseTexture const&) = delete;
+    // Получаем указатель на текстурный объект
+    QOpenGLTexture* Get() const
+    {
+        return m_texture.get();
+    }
 
-	virtual ~BaseTexture() = default;
+    // Делаем объект активным (биндим)
+    void Bind() const
+    {
+        assert(m_texture);
+        m_texture->bind();
+    }
 
 protected:
-	explicit BaseTexture(GLuint texture)
-		: m_texture(texture)
-	{
-	}
-
-	void SetTexture(GLuint texture)
-	{
-		m_texture = texture;
-	}
+    void SetTexture(std::unique_ptr<QOpenGLTexture> texture)
+    {
+        m_texture = std::move(texture);
+    }
 
 private:
-	GLuint m_texture;
+    std::unique_ptr<QOpenGLTexture> m_texture;
 };
 
-template <bool t_managed, class TBase> class TextureImpl : public TBase
+// Управляемая/неуправляемая обертка
+template <bool t_managed, class TBase>
+class TextureImpl : public TBase
 {
 public:
-	explicit TextureImpl(GLuint texture = 0)
-		: TBase(texture)
-	{
-	}
+    explicit TextureImpl(QOpenGLTexture::Target target = QOpenGLTexture::Target2D)
+        : TBase(target)
+    {}
 
-	~TextureImpl()
-	{
-		bool m = t_managed;
-		if (m)
-		{
-			TBase::Delete();
-		}
-	}
+    ~TextureImpl()
+    {
+        if (t_managed && this->Get())
+            this->Delete();
+    }
 
-	// Присоединяем текстурный объект
-	void Attach(GLuint texture)
-	{
-		if (t_managed && texture && texture != *this)
-		{
-			TBase::Delete();
-		}
-		TBase::SetTexture(texture);
-	}
+    void Attach(std::unique_ptr<QOpenGLTexture> texture)
+    {
+        if (t_managed && this->Get() && texture.get() != this->Get())
+            this->Delete();
+        this->SetTexture(std::move(texture));
+    }
 };
 
 class Texture2DImpl : public BaseTexture
 {
 public:
-	explicit Texture2DImpl(GLuint texture = 0)
-		: BaseTexture(texture)
-	{
-	}
+	Texture2DImpl()
+		: BaseTexture(QOpenGLTexture::Target2D)
+	{}
+
+	explicit Texture2DImpl(QOpenGLTexture::Target target)
+		: BaseTexture(target)
+	{}
 
 	void Bind() const
 	{
-		BindTo(GL_TEXTURE_2D);
-	}
-
-	static void TexImage(GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
-	{
-		glTexImage2D(GL_TEXTURE_2D, level, internalFormat, width, height, border, format, type, pixels);
+		BaseTexture::Bind();
 	}
 };
 
 class Texture1DImpl : public BaseTexture
 {
 public:
-	explicit Texture1DImpl(GLuint texture = 0)
-		: BaseTexture(texture)
-	{
-	}
+	Texture1DImpl()
+		: BaseTexture(QOpenGLTexture::Target1D)
+	{}
+
+	explicit Texture1DImpl(QOpenGLTexture::Target target)
+		: BaseTexture(target)
+	{}
 
 	void Bind() const
 	{
-		BindTo(GL_TEXTURE_1D);
-	}
-
-	static void TexImage(GLint level, GLint internalFormat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
-	{
-		glTexImage1D(GL_TEXTURE_1D, level, internalFormat, width, border, format, type, pixels);
+		BaseTexture::Bind();
 	}
 };
 
-typedef TextureImpl<true, BaseTexture> Texture;
-typedef TextureImpl<false, BaseTexture> TextureHandle;
-
-typedef TextureImpl<true, Texture2DImpl> Texture2D;
-typedef TextureImpl<false, Texture2DImpl> Texture2DHandle;
-
-typedef TextureImpl<true, Texture1DImpl> Texture1D;
-typedef TextureImpl<false, Texture1DImpl> Texture1DHandle;
+// typedef-ы для удобства
+using Texture        = TextureImpl<true,  BaseTexture>;
+using TextureHandle  = TextureImpl<false, BaseTexture>;
+using Texture2D      = TextureImpl<true,  Texture2DImpl>;
+using Texture2DHandle= TextureImpl<false, Texture2DImpl>;
+using Texture1D      = TextureImpl<true,  Texture1DImpl>;
+using Texture1DHandle= TextureImpl<false, Texture1DImpl>;

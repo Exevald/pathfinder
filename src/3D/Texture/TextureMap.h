@@ -1,19 +1,21 @@
 #pragma once
-#include "Texture.h"
+
+#include <QOpenGLTexture>
+#include <memory>
 
 class TextureMap
 {
 public:
-	explicit TextureMap(GLuint textureId = 0);
+	explicit TextureMap(std::unique_ptr<QOpenGLTexture> texture = nullptr);
 
 	TextureMap(const TextureMap& other) = delete;
 	TextureMap& operator=(const TextureMap& other) = delete;
 
-	// Связываем текстурную карту с текстурным объектом OpenGL
-	void AttachTexture(GLuint textureId);
+	// Связываем текстурную карту с текстурным объектом
+	void AttachTexture(std::unique_ptr<QOpenGLTexture> texture);
 
 	// Получить текстурный объект, связанный с текстурной картой
-	[[nodiscard]] Texture2DHandle const& GetTexture() const;
+	[[nodiscard]] const QOpenGLTexture* GetTexture() const;
 
 	// Установить трансформацию масштабирования текстурных координат
 	void SetScale(float sx, float sy);
@@ -24,11 +26,11 @@ public:
 	// Установить угол поворота текстурных координат
 	void SetRotation(float rotation);
 
-	// Связан ли текстурный объект с данонй текстурной картой
+	// Связан ли текстурный объект с данной текстурной картой
 	[[nodiscard]] bool IsLoaded() const;
 
 private:
-	Texture2DHandle m_texture;
+	std::unique_ptr<QOpenGLTexture> m_texture;
 	float m_sx;
 	float m_sy;
 	float m_dx;

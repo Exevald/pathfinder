@@ -1,39 +1,31 @@
 #include "Light.h"
+#include <QOpenGLShaderProgram>
 
 Light::Light()
 {
-	SetDiffuseIntensity(0.8f, 0.8f, 0.8f, 1.0);
-	SetAmbientIntensity(0.2f, 0.2f, 0.2f, 1.0);
-	SetSpecularIntensity(0.5f, 0.5f, 0.5f, 1.0);
+	SetDiffuseIntensity(0.8f, 0.8f, 0.8f, 1.0f);
+	SetAmbientIntensity(0.2f, 0.2f, 0.2f, 1.0f);
+	SetSpecularIntensity(0.5f, 0.5f, 0.5f, 1.0f);
 }
 
-void Light::SetLight(const GLenum light)const
+void Light::SetDiffuseIntensity(float r, float g, float b, float a)
 {
-	glLightfv(light, GL_DIFFUSE, m_diffuse);
-	glLightfv(light, GL_AMBIENT, m_ambient);
-	glLightfv(light, GL_SPECULAR, m_specular);
+	m_diffuse = QVector4D(r, g, b, a);
 }
 
-void Light::SetDiffuseIntensity(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+void Light::SetAmbientIntensity(float r, float g, float b, float a)
 {
-	m_diffuse[0] = r;
-	m_diffuse[1] = g;
-	m_diffuse[2] = b;
-	m_diffuse[3] = a;
+	m_ambient = QVector4D(r, g, b, a);
 }
 
-void Light::SetAmbientIntensity(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+void Light::SetSpecularIntensity(float r, float g, float b, float a)
 {
-	m_ambient[0] = r;
-	m_ambient[1] = g;
-	m_ambient[2] = b;
-	m_ambient[3] = a;
+	m_specular = QVector4D(r, g, b, a);
 }
 
-void Light::SetSpecularIntensity(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+void Light::SetUniforms(QOpenGLShaderProgram* program, const QString& uniformPrefix) const
 {
-	m_specular[0] = r;
-	m_specular[1] = g;
-	m_specular[2] = b;
-	m_specular[3] = a;
+	program->setUniformValue((uniformPrefix + ".diffuse").toUtf8().constData(), m_diffuse);
+	program->setUniformValue((uniformPrefix + ".ambient").toUtf8().constData(), m_ambient);
+	program->setUniformValue((uniformPrefix + ".specular").toUtf8().constData(), m_specular);
 }

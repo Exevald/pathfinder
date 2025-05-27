@@ -1,28 +1,28 @@
 #include "TextureMap.h"
 
-TextureMap::TextureMap(GLuint textureId)
-	: m_texture(textureId)
-	  , m_sx(1)
-	  , m_sy(1)
-	  , m_dx(0)
-	  , m_dy(0)
-	  , m_rotation(0)
+TextureMap::TextureMap(std::unique_ptr<QOpenGLTexture> texture)
+	: m_texture(std::move(texture))
+	, m_sx(1.0f)
+	, m_sy(1.0f)
+	, m_dx(0.0f)
+	, m_dy(0.0f)
+	, m_rotation(0.0f)
 {
 }
 
-Texture2DHandle const& TextureMap::GetTexture() const
+void TextureMap::AttachTexture(std::unique_ptr<QOpenGLTexture> texture)
 {
-	return m_texture;
+	m_texture = std::move(texture);
+}
+
+const QOpenGLTexture* TextureMap::GetTexture() const
+{
+	return m_texture.get();
 }
 
 bool TextureMap::IsLoaded() const
 {
-	return m_texture != 0;
-}
-
-void TextureMap::AttachTexture(GLuint textureId)
-{
-	m_texture.Attach(textureId);
+	return m_texture && m_texture->isCreated();
 }
 
 void TextureMap::SetScale(float sx, float sy)
@@ -41,4 +41,3 @@ void TextureMap::SetRotation(float rotation)
 {
 	m_rotation = rotation;
 }
-

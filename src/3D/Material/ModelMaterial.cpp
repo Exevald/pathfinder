@@ -10,14 +10,14 @@ Material& ModelMaterial::GetMaterial()
 	return m_material;
 }
 
-Material const& ModelMaterial::GetMaterial() const
+const Material& ModelMaterial::GetMaterial() const
 {
 	return m_material;
 }
 
-TextureMap& ModelMaterial::AddTextureMap1(GLuint texture)
+TextureMap& ModelMaterial::AddTextureMap1(std::unique_ptr<QOpenGLTexture> texture)
 {
-	m_textureMap1.AttachTexture(texture);
+	m_textureMap1.AttachTexture(std::move(texture));
 	return m_textureMap1;
 }
 
@@ -26,7 +26,7 @@ bool ModelMaterial::HasTextureMap1() const
 	return m_textureMap1.IsLoaded();
 }
 
-TextureMap const& ModelMaterial::GetTextureMap1() const
+const TextureMap& ModelMaterial::GetTextureMap1() const
 {
 	return m_textureMap1;
 }

@@ -1,5 +1,5 @@
-#include "CGridViewModel.h"
-#include "../Service/CObjLoader.h"
+#include "GridViewModel.h"
+#include "../Service/ObjLoader.h"
 #include <algorithm>
 #include <iostream>
 
@@ -13,7 +13,7 @@ std::string GetFileExtension(const std::string& filePath)
 		return "";
 	}
 	std::string extension = filePath.substr(dotPos + 1);
-	std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+	std::ranges::transform(extension, extension.begin(), ::tolower);
 
 	return extension;
 }
@@ -24,24 +24,24 @@ std::unique_ptr<IMeshLoader> CreateMeshLoader(const std::string& filePath)
 
 	if (extension == "obj")
 	{
-		return std::make_unique<CObjLoader>(filePath.c_str());
+		return std::make_unique<ObjLoader>();
 	}
 	throw std::runtime_error("Unsupported file format: " + extension);
 }
 } // namespace
 
-CGridViewModel::CGridViewModel()
+GridViewModel::GridViewModel()
 	: m_fileLoader(nullptr)
 	, m_grid(nullptr)
 {
 }
 
-void CGridViewModel::LoadData(const std::string& filePath)
+void GridViewModel::LoadData(const std::string& filePath)
 {
 	try
 	{
 		auto meshLoader = CreateMeshLoader(filePath);
-		auto fileLoader = CFileLoader(std::move(meshLoader));
+		auto fileLoader = FileLoader(std::move(meshLoader));
 		m_fileLoader = std::move(fileLoader);
 
 		m_grid = std::make_unique<Grid>(m_fileLoader.LoadAndConvert());
@@ -52,7 +52,7 @@ void CGridViewModel::LoadData(const std::string& filePath)
 	}
 }
 
-[[nodiscard]] Grid* CGridViewModel::GetGrid() const
+[[nodiscard]] Grid* GridViewModel::GetGrid() const
 {
 	return m_grid.get();
 }

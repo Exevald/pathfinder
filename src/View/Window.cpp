@@ -1,21 +1,19 @@
-#include "CWindow.h"
-#include "COpenGLWidget.h"
+#include "Window.h"
 #include <QFileDialog>
 #include <QGraphicsRectItem>
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 
-CWindow::CWindow(QWidget* parent, std::unique_ptr<CGridViewModel> viewModel)
+Window::Window(QWidget* parent, std::unique_ptr<GridViewModel> viewModel)
 	: QMainWindow(parent)
-	, m_graphicsView(nullptr)
-	, m_scene(nullptr)
 	, m_gridViewModel(std::move(viewModel))
 {
+	setWindowTitle("Pathfinder");
 	ShowMainMenu();
 }
 
-void CWindow::ShowMainMenu()
+void Window::ShowMainMenu()
 {
 	auto* centralWidget = new QWidget(this);
 	centralWidget->setStyleSheet("background-color: white;");
@@ -37,7 +35,7 @@ void CWindow::ShowMainMenu()
 	layout->addWidget(titleLabel, 0, Qt::AlignLeft | Qt::AlignTop);
 
 	auto* loadCADButton = new QPushButton("Загрузить CAD-файл", this);
-	connect(loadCADButton, &QPushButton::clicked, this, &CWindow::OnOpenCADFile);
+	connect(loadCADButton, &QPushButton::clicked, this, &Window::OnOpenCADFile);
 
 	auto* exitButton = new QPushButton("Выход", this);
 	connect(exitButton, &QPushButton::clicked, this, []() { QApplication::quit(); });
@@ -91,7 +89,7 @@ void CWindow::ShowMainMenu()
 	layout->setSpacing(20);
 }
 
-void CWindow::OnOpenCADFile()
+void Window::OnOpenCADFile()
 {
 	const QString filePath = QFileDialog::getOpenFileName(
 		this,
@@ -106,12 +104,12 @@ void CWindow::OnOpenCADFile()
 	}
 }
 
-void CWindow::OnDraw3DSpace()
+void Window::OnDraw3DSpace()
 {
 	Draw3DSpace();
 }
 
-void CWindow::Draw3DSpace()
+void Window::Draw3DSpace()
 {
 	auto* centralWidget = new QWidget(this);
 	centralWidget->setStyleSheet("background-color: white;");
@@ -119,10 +117,6 @@ void CWindow::Draw3DSpace()
 
 	auto* layout = new QVBoxLayout(centralWidget);
 	layout->setContentsMargins(50, 50, 50, 50);
-
-	auto* openGLWidget = new COpenGLWidget(this);
-	openGLWidget->setFixedSize(1440, 860);
-	layout->addWidget(openGLWidget);
 
 	auto* infoContainer = new QWidget(this);
 	infoContainer->setFixedWidth(300);
@@ -158,7 +152,7 @@ void CWindow::Draw3DSpace()
 	infoLayout->addWidget(infoContainer, 0, Qt::AlignRight);
 
 	auto* backButton = new QPushButton("Выход в меню", this);
-	connect(backButton, &QPushButton::clicked, this, &CWindow::OnBackToMenu);
+	connect(backButton, &QPushButton::clicked, this, &Window::OnBackToMenu);
 	backButton->setStyleSheet(
 		"QPushButton {"
 		"   background-color: #0E39C7;"
@@ -185,7 +179,7 @@ void CWindow::Draw3DSpace()
 	centralWidget->setLayout(mainLayout);
 }
 
-void CWindow::OnBackToMenu()
+void Window::OnBackToMenu()
 {
 	ShowMainMenu();
 }

@@ -1,23 +1,18 @@
 #include "DirectLight.h"
+#include <QOpenGLShaderProgram>
 
-DirectLight::DirectLight(CVector3f const& lightDirection)
-	: m_direction(lightDirection)
+DirectLight::DirectLight(const QVector3D& direction)
+	: m_direction(direction)
 {
 }
 
-void DirectLight::SetLight(const GLenum light) const
-{
-	const GLfloat lightDirection[4] = {
-		m_direction.x,
-		m_direction.y,
-		m_direction.z,
-		0
-	};
-	glLightfv(light, GL_POSITION, lightDirection);
-	Light::SetLight(light);
-}
-
-void DirectLight::SetDirection(CVector3f const& direction)
+void DirectLight::SetDirection(const QVector3D& direction)
 {
 	m_direction = direction;
+}
+
+void DirectLight::SetUniforms(QOpenGLShaderProgram* program, const QString& uniformPrefix) const
+{
+	Light::SetUniforms(program, uniformPrefix);
+	program->setUniformValue((uniformPrefix + ".direction").toUtf8().constData(), m_direction);
 }

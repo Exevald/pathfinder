@@ -2,31 +2,32 @@
 
 #include "Material.h"
 #include "Texture/TextureMap.h"
+#include <memory>
 
 class ModelMaterial
 {
 public:
 	ModelMaterial();
 
-	ModelMaterial(ModelMaterial const& other) = delete;
-	ModelMaterial& operator=(ModelMaterial const& other) = delete;
+	ModelMaterial(const ModelMaterial&) = delete;
+	ModelMaterial& operator=(const ModelMaterial&) = delete;
 
 	// Добавить текстурную карту №1 к материалу
-	TextureMap& AddTextureMap1(GLuint texture);
+	TextureMap& AddTextureMap1(std::unique_ptr<QOpenGLTexture> texture);
 
 	// Связана ли с материалом текстурная карта №1?
-	[[nodiscard]] bool HasTextureMap1() const;
+	bool HasTextureMap1() const;
 
 	// Получить текстурную карту №1
-	[[nodiscard]] TextureMap const& GetTextureMap1() const;
+	const TextureMap& GetTextureMap1() const;
 	TextureMap& GetTextureMap1();
 
-	// Получить материал OpenGL
+	// Получить материал
 	Material& GetMaterial();
-	[[nodiscard]] Material const& GetMaterial() const;
+	const Material& GetMaterial() const;
 
 	// Материал видим с лицевой и нелицевой грани?
-	[[nodiscard]] bool IsTwoSided() const;
+	bool IsTwoSided() const;
 	void SetTwoSided(bool value);
 
 private:

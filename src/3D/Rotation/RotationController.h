@@ -1,22 +1,26 @@
 #pragma once
-#include <GL/glew.h>
+#include <QMatrix4x4>
 
-class CRotationController
+class RotationController
 {
 public:
-	CRotationController(int windowWidth, int windowHeight);
-	~CRotationController() = default;
+	RotationController(int windowWidth, int windowHeight);
+	~RotationController() = default;
+
 	[[nodiscard]] bool LeftButtonIsPressed() const;
 	void ResizeWindow(int windowWidth, int windowHeight);
 	void OnMouse(int button, int state, int x, int y);
 	void OnMotion(int x, int y);
+	[[nodiscard]] QMatrix4x4 GetRotationMatrix() const;
 
 private:
-	static void NormalizeModelViewMatrix();
-	static void RotateCamera(GLfloat rotateX, GLfloat rotateY);
-	bool m_leftButtonPressed;
-	int m_mouseX{};
-	int m_mouseY{};
+	void NormalizeModelViewMatrix();
+	void RotateCamera(float rotateX, float rotateY);
+
+	bool m_leftButtonPressed = false;
+	int m_mouseX = 0;
+	int m_mouseY = 0;
 	int m_windowWidth;
 	int m_windowHeight;
+	QMatrix4x4 m_rotationMatrix;
 };
