@@ -4,6 +4,91 @@
 #include <QOpenGLTexture>
 #include <iostream>
 #include <stdexcept>
+#include <unordered_set>
+
+namespace
+{
+Mesh ConvertShapeToMesh(
+	const tinyobj::shape_t& shape,
+	const tinyobj::attrib_t& attrib)
+{
+	if (shape.mesh.indices.empty())
+	{
+		return {
+			0,
+			0,
+			0,
+			0,
+			false,
+			BoundingBox{},
+			GL_TRIANGLES,
+			GL_UNSIGNED_INT
+		};
+	}
+
+	const auto& firstIdx = shape.mesh.indices[0];
+	float x = attrib.vertices[3 * firstIdx.vertex_index + 0];
+	float y = attrib.vertices[3 * firstIdx.vertex_index + 1];
+	float z = attrib.vertices[3 * firstIdx.vertex_index + 2];
+	CVector3f minCoord(x, y, z);
+	CVector3f maxCoord(x, y, z);
+
+	for (size_t i = 1; i < shape.mesh.indices.size(); ++i)
+	{
+		const auto& idx = shape.mesh.indices[i];
+		x = attrib.vertices[3 * idx.vertex_index + 0];
+		y = attrib.vertices[3 * idx.vertex_index + 1];
+		z = attrib.vertices[3 * idx.vertex_index + 2];
+		minCoord.x = std::min(minCoord.x, x);
+		minCoord.y = std::min(minCoord.y, y);
+		minCoord.z = std::min(minCoord.z, z);
+		maxCoord.x = std::max(maxCoord.x, x);
+		maxCoord.y = std::max(maxCoord.y, y);
+		maxCoord.z = std::max(maxCoord.z, z);
+	}
+
+	const BoundingBox bbox(minCoord, maxCoord);
+	std::unordered_set<unsigned> uniqueVertices;
+	for (const auto& idx : shape.mesh.indices)
+	{
+		uniqueVertices.insert(idx.vertex_index);
+	}
+	const auto vertexCount = static_cast<unsigned>(uniqueVertices.size());
+	const auto indexCount = static_cast<unsigned>(shape.mesh.indices.size());
+
+	const bool hasTextureCoords = !attrib.texcoords.empty();
+
+	Mesh mesh(
+		0,
+		0,
+		vertexCount,
+		indexCount,
+		hasTextureCoords,
+		bbox,
+		GL_TRIANGLES,
+		GL_UNSIGNED_INT);
+
+	mesh.AddSubMesh(0, indexCount);
+
+	return mesh;
+}
+
+std::unique_ptr<QOpenGLTexture> LoadTexture(
+	const std::string& name,
+	const std::string& baseFolder)
+{
+	QString texturePath = QString::fromStdString(baseFolder + name);
+	QImage image(texturePath);
+	if (image.isNull())
+		throw std::runtime_error("Failed to load texture: " + texturePath.toStdString());
+
+	auto texture = std::make_unique<QOpenGLTexture>(image.mirrored());
+	texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+	texture->setMagnificationFilter(QOpenGLTexture::Linear);
+	texture->setWrapMode(QOpenGLTexture::Repeat);
+	return texture;
+}
+} // namespace
 
 ObjLoader::ObjLoader()
 	: m_isLoaded(false)
@@ -13,13 +98,15 @@ ObjLoader::ObjLoader()
 {
 }
 
-std::vector<Mesh> ObjLoader::GetMeshes() const
+std::vector<Mesh> ObjLoader::GetMeshes(const std::string& fileName)
 {
-	if (!m_isLoaded)
+	LoadFile(fileName);
+	std::vector<Mesh> meshes;
+	for (const auto& shape : m_shapes)
 	{
-		throw std::runtime_error("OBJ file is not loaded");
+		meshes.push_back(ConvertShapeToMesh(shape, m_attrib));
 	}
-	return {};
+	return meshes;
 }
 
 void ObjLoader::IgnoreMissingTextures(bool ignore)
@@ -37,11 +124,8 @@ void ObjLoader::SetIndexBufferUsage(GLenum usage)
 	m_indexBufferUsage = usage;
 }
 
-void ObjLoader::LoadFile(const std::string& fileName, Model& model) const
+void ObjLoader::LoadFile(const std::string& fileName)
 {
-	tinyobj::attrib_t attrib;
-	std::vector<tinyobj::shape_t> shapes;
-	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
 
 	const size_t slashPos = fileName.find_last_of("/\\");
@@ -49,7 +133,7 @@ void ObjLoader::LoadFile(const std::string& fileName, Model& model) const
 		? ""
 		: fileName.substr(0, slashPos + 1);
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, fileName.c_str(), baseFolder.c_str()))
+	if (!tinyobj::LoadObj(&m_attrib, &m_shapes, &m_materials, &warn, &err, fileName.c_str(), baseFolder.c_str()))
 	{
 		throw std::runtime_error(warn + err);
 	}
@@ -59,8 +143,10 @@ void ObjLoader::LoadFile(const std::string& fileName, Model& model) const
 		std::cout << "Warning: " << warn << std::endl;
 	}
 
-	ProcessMaterials(materials, model, baseFolder);
-	ProcessShapes(attrib, shapes, materials, model);
+	ProcessMaterials(m_materials, m_model, baseFolder);
+	ProcessShapes(m_attrib, m_shapes, m_materials, m_model);
+
+	m_isLoaded = true;
 }
 
 void ObjLoader::ProcessMaterials(
@@ -110,20 +196,4 @@ void ObjLoader::ProcessShapes(
 	const std::vector<tinyobj::material_t>& materials,
 	Model& model) const
 {
-}
-
-std::unique_ptr<QOpenGLTexture> ObjLoader::LoadTexture(
-	const std::string& name,
-	const std::string& baseFolder) const
-{
-	QString texturePath = QString::fromStdString(baseFolder + name);
-	QImage image(texturePath);
-	if (image.isNull())
-		throw std::runtime_error("Failed to load texture: " + texturePath.toStdString());
-
-	auto texture = std::make_unique<QOpenGLTexture>(image.mirrored());
-	texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-	texture->setMagnificationFilter(QOpenGLTexture::Linear);
-	texture->setWrapMode(QOpenGLTexture::Repeat);
-	return texture;
 }

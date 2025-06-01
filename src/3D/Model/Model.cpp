@@ -4,17 +4,13 @@ bool Model::CompareTextureNames::operator()(std::string const& textureName1, std
 {
 	// Переводим имя первой текстуры к нижнему регистру
 	std::string name1LowerCase(textureName1);
-	std::transform(
-		name1LowerCase.begin(),
-		name1LowerCase.end(),
+	std::ranges::transform(name1LowerCase,
 		name1LowerCase.begin(),
 		tolower);
 
 	// Переводим имя второй текстуры к нижнему регистру
 	std::string name2LowerCase(textureName2);
-	std::transform(
-		name2LowerCase.begin(),
-		name2LowerCase.end(),
+	std::ranges::transform(name2LowerCase,
 		name2LowerCase.begin(),
 		tolower);
 
@@ -52,8 +48,7 @@ ModelMaterial& Model::GetMaterial(size_t index)
 Texture2D& Model::AddTextureImage(std::string const& name)
 {
 	// Ищем, есть ли текстура с таким именем
-	CTextures::iterator it = m_textures.find(name);
-	if (it != m_textures.end())
+	if (const auto it = m_textures.find(name); it != m_textures.end())
 	{
 		// Если есть, возвращаем ссылку на существующую
 		return *it->second;
@@ -72,8 +67,7 @@ Texture2D& Model::AddTextureImage(std::string const& name)
 
 bool Model::HasTexture(std::string const& name) const
 {
-	CTextures::const_iterator it = m_textures.find(name);
-	return it != m_textures.end();
+	return m_textures.contains(name);
 }
 
 size_t Model::GetTexturesCount() const
@@ -89,7 +83,7 @@ std::string Model::GetTextureName(size_t index) const
 // Возвращаем текстурный объект по его имени
 Texture2D& Model::GetTextureByName(std::string const& name)
 {
-	CTextures::iterator it = m_textures.find(name);
+	const auto it = m_textures.find(name);
 	if (it == m_textures.end())
 	{
 		throw std::logic_error("Texture with the specified name does not exist");
@@ -100,7 +94,7 @@ Texture2D& Model::GetTextureByName(std::string const& name)
 // Возвращаем текстурный объект по его имени
 Texture2D const& Model::GetTextureByName(std::string const& name) const
 {
-	CTextures::const_iterator it = m_textures.find(name);
+	const auto it = m_textures.find(name);
 	if (it == m_textures.end())
 	{
 		throw std::logic_error("Texture with the specified name does not exist");
@@ -111,14 +105,14 @@ Texture2D const& Model::GetTextureByName(std::string const& name) const
 // Возвращаем текстурный объект по его индексу
 Texture2D& Model::GetTexture(size_t index)
 {
-	std::string textureName = m_textureNames.at(index);
+	const std::string textureName = m_textureNames.at(index);
 	return GetTextureByName(textureName);
 }
 
 // Возвращаем текстурный объект по его индексу
 Texture2D const& Model::GetTexture(size_t index) const
 {
-	std::string textureName = m_textureNames.at(index);
+	const std::string textureName = m_textureNames.at(index);
 	return GetTextureByName(textureName);
 }
 

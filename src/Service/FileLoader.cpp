@@ -7,9 +7,9 @@ FileLoader::FileLoader(std::unique_ptr<IMeshLoader> meshLoader)
 {
 }
 
-Grid FileLoader::LoadAndConvert() const
+Grid FileLoader::LoadAndConvert(const std::string& fileName) const
 {
-	const auto meshes = m_meshLoader->GetMeshes();
+	const auto meshes = m_meshLoader->GetMeshes(fileName);
 
 	BoundingBox totalBoundingBox;
 	for (const auto& mesh : meshes)

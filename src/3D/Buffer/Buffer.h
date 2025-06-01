@@ -16,7 +16,6 @@ public:
 		, m_useVBO(useVBO)
 		, m_created(false)
 	{
-		QOpenGLFunctions_3_2_Core::initializeOpenGLFunctions();
 	}
 
 	BufferImpl(BufferImpl const&) = delete;

@@ -7,7 +7,7 @@ namespace
 {
 std::string GetFileExtension(const std::string& filePath)
 {
-	size_t dotPos = filePath.find_last_of('.');
+	const size_t dotPos = filePath.find_last_of('.');
 	if (dotPos == std::string::npos)
 	{
 		return "";
@@ -44,7 +44,7 @@ void GridViewModel::LoadData(const std::string& filePath)
 		auto fileLoader = FileLoader(std::move(meshLoader));
 		m_fileLoader = std::move(fileLoader);
 
-		m_grid = std::make_unique<Grid>(m_fileLoader.LoadAndConvert());
+		m_grid = std::make_unique<Grid>(m_fileLoader.LoadAndConvert(filePath));
 	}
 	catch (const std::exception& e)
 	{

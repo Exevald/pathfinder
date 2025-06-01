@@ -27,9 +27,6 @@ public:
 		GLenum indexType // тип индексов сетки
 	);
 
-	Mesh(Mesh const& mesh) = delete;
-	Mesh& operator=(Mesh const& mesh) = delete;
-
 	// Есть ли в сетке текстурные координаты?
 	bool HasTextureCoords() const;
 
@@ -99,7 +96,7 @@ private:
 	// Связаны ли вершинные координаты с вершинами сетки
 	bool m_hasTexture;
 	// Ограничивающий блок полигональной сетки
-	BoundingBox const m_boundingBox;
+	BoundingBox m_boundingBox;
 	// Тип примитивов полигональной сетки (GL_TRIANGLES и т.п.)
 	GLenum m_primitiveType;
 	// Тип индексов полигональной сетки (GL_UNSIGNED_SHORT и т.п.)

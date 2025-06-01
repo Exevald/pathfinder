@@ -8,7 +8,7 @@ class FileLoader
 {
 public:
 	explicit FileLoader(std::unique_ptr<IMeshLoader> meshLoader);
-	Grid LoadAndConvert() const;
+	[[nodiscard]] Grid LoadAndConvert(const std::string& fileName) const;
 
 private:
 	std::unique_ptr<IMeshLoader> m_meshLoader;
