@@ -33,6 +33,7 @@ std::unique_ptr<IMeshLoader> CreateMeshLoader(const std::string& filePath)
 GridViewModel::GridViewModel()
 	: m_fileLoader(nullptr)
 	, m_grid(nullptr)
+	, m_model(nullptr)
 {
 }
 
@@ -45,6 +46,7 @@ void GridViewModel::LoadData(const std::string& filePath)
 		m_fileLoader = std::move(fileLoader);
 
 		m_grid = std::make_unique<Grid>(m_fileLoader.LoadAndConvert(filePath));
+		m_model = m_fileLoader.GetModel();
 	}
 	catch (const std::exception& e)
 	{
@@ -55,4 +57,9 @@ void GridViewModel::LoadData(const std::string& filePath)
 [[nodiscard]] Grid* GridViewModel::GetGrid() const
 {
 	return m_grid.get();
+}
+
+std::shared_ptr<Model> GridViewModel::GetModel()
+{
+	return m_model;
 }

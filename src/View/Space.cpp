@@ -1,111 +1,116 @@
 #include "Space.h"
-#include <QWheelEvent>
+
+#include "Model/ModelRenderer.h"
+#include <QDebug>
 #include <QFile>
 #include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
-#include <QDebug>
+#include <QWheelEvent>
 
 Space::Space(QWidget* parent)
-    : QOpenGLWidget(parent)
-    , m_cameraPosition(0.0f, 0.0f, 5.0f)
-    , m_cameraTarget(0.0f, 0.0f, 0.0f)
-    , m_zoom(1.0f)
+	: QOpenGLWidget(parent)
+	, m_cameraPosition(0.0f, 0.0f, 5.0f)
+	, m_cameraTarget(0.0f, 0.0f, 0.0f)
 {
-    m_rotationController = std::make_unique<RotationController>(width(), height());
+	m_rotationController = std::make_unique<RotationController>(width(), height());
 }
 
 Space::~Space() = default;
 
-bool Space::LoadModelFromOBJ(const QString& filePath)
+void Space::SetModel(std::shared_ptr<Model> model)
 {
-    // Здесь должен быть ваш загрузчик .obj, который наполняет m_model
-    // Например:
-    // m_model = std::make_unique<Model>();
-    // ObjLoader loader;
-    // loader.LoadFile(filePath.toStdString(), *m_model);
-    // Для примера вернём true
-    update();
-    return true;
+	m_model = std::move(model);
+}
+
+std::shared_ptr<Model> Space::GetModel() const
+{
+	return m_model;
 }
 
 void Space::initializeGL()
 {
-    initializeOpenGLFunctions();
+	initializeOpenGLFunctions();
 
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glEnable(GL_DEPTH_TEST);
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glEnable(GL_DEPTH_TEST);
 
-    // Загрузка и компиляция шейдеров
-    m_shader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/vertex.glsl");
-    m_shader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/fragment.glsl");
-    if (!m_shader.link()) {
-        qCritical() << "Shader link error:" << m_shader.log();
-    }
+	m_shader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/vertex.glsl");
+	m_shader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/fragment.glsl");
+	if (!m_shader.link())
+	{
+		qCritical() << "Shader link error:" << m_shader.log();
+	}
 }
 
 void Space::resizeGL(int w, int h)
 {
-    m_projection.setToIdentity();
-    m_projection.perspective(45.0f, float(w) / float(h), 0.1f, 100.0f);
-    m_rotationController->ResizeWindow(w, h);
+	m_projection.setToIdentity();
+	m_projection.perspective(45.0f, float(w) / float(h), 0.1f, 100.0f);
+	m_rotationController->ResizeWindow(w, h);
 }
 
 void Space::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	setupCamera();
 
-    setupCamera();
-
-    if (m_model) {
-        renderModel();
-    }
+	if (m_model)
+	{
+		renderModel();
+	}
 }
 
 void Space::mousePressEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::LeftButton) {
-        QPoint pos = event->pos();
-        m_rotationController->OnMouse(0, 0, pos.x(), pos.y());
-    }
+	if (event->button() == Qt::LeftButton)
+	{
+		const QPoint pos = event->pos();
+		m_rotationController->OnMouse(0, 0, pos.x(), pos.y());
+	}
 }
 
 void Space::mouseReleaseEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::LeftButton) {
-        QPoint pos = event->pos();
-        m_rotationController->OnMouse(0, 1, pos.x(), pos.y());
-    }
+	if (event->button() == Qt::LeftButton)
+	{
+		QPoint pos = event->pos();
+		m_rotationController->OnMouse(0, 1, pos.x(), pos.y());
+	}
 }
 
 void Space::mouseMoveEvent(QMouseEvent* event)
 {
-    QPoint pos = event->pos();
-    m_rotationController->OnMotion(pos.x(), pos.y());
-    update();
+	const QPoint pos = event->pos();
+	m_rotationController->OnMotion(pos.x(), pos.y());
+	update();
 }
 
 void Space::wheelEvent(QWheelEvent* event)
 {
-    m_zoom += event->angleDelta().y() / 1200.0f;
-    m_zoom = qBound(0.1f, m_zoom, 10.0f);
-    update();
+	m_zoom += event->angleDelta().y() / 1200.0f;
+	m_zoom = qBound(0.1f, m_zoom, 10.0f);
+	update();
 }
 
 void Space::setupCamera()
 {
-    m_view.setToIdentity();
-    m_view.translate(0.0f, 0.0f, -5.0f * m_zoom);
-    m_view.lookAt(m_cameraPosition, m_cameraTarget, QVector3D(0.0f, 1.0f, 0.0f));
+	m_view.setToIdentity();
+	m_view.translate(0.0f, 0.0f, -5.0f * m_zoom);
+	m_view.lookAt(m_cameraPosition, m_cameraTarget, QVector3D(0.0f, 1.0f, 0.0f));
 }
 
 void Space::renderModel()
 {
-    // Пример передачи матриц в шейдер
-    m_shader.bind();
-    m_shader.setUniformValue("projection", m_projection);
-    m_shader.setUniformValue("view", m_view * m_rotationController->GetRotationMatrix());
-    // Здесь должен быть ваш код рендера модели через VBO/VAO
-    // Например:
-    // for (const auto& mesh : m_model->meshes()) { mesh.draw(&m_shader); }
-    m_shader.release();
+	if (!m_model)
+	{
+		return;
+	}
+
+	m_shader.bind();
+	m_shader.setUniformValue("projection", m_projection);
+	m_shader.setUniformValue("view", m_view * m_rotationController->GetRotationMatrix());
+
+	const ModelRenderer renderer(this, &m_shader);
+	renderer.RenderModel(*m_model);
+
+	m_shader.release();
 }

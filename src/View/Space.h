@@ -15,8 +15,8 @@ class Space final : public QOpenGLWidget
 public:
 	explicit Space(QWidget* parent = nullptr);
 	~Space() override;
-
-	bool LoadModelFromOBJ(const QString& filePath);
+	void SetModel(std::shared_ptr<Model> model);
+	[[nodiscard]] std::shared_ptr<Model> GetModel() const;
 
 protected:
 	void initializeGL() override;
@@ -32,7 +32,7 @@ private:
 	void setupCamera();
 	void renderModel();
 
-	std::unique_ptr<Model> m_model;
+	std::shared_ptr<Model> m_model;
 	std::unique_ptr<RotationController> m_rotationController;
 
 	QOpenGLShaderProgram m_shader;

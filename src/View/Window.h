@@ -1,13 +1,11 @@
 #pragma once
 
 #include "../ViewModel/GridViewModel.h"
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QMainWindow>
-#include <QtWidgets/QGraphicsView>
-#include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QLabel>
+#include "Space.h"
 #include <QtCore/QString>
-#include <QtCore/QObject>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QGraphicsView>
+#include <QtWidgets/QMainWindow>
 #include <memory>
 
 QT_BEGIN_NAMESPACE
@@ -17,7 +15,7 @@ class Window;
 }
 QT_END_NAMESPACE
 
-class Window : public QMainWindow
+class Window final : public QMainWindow
 {
 	Q_OBJECT
 
@@ -26,7 +24,6 @@ public:
 
 private slots:
 	void OnOpenCADFile();
-	void OnDraw3DSpace();
 	void OnBackToMenu();
 
 private:
@@ -36,4 +33,5 @@ private:
 	std::unique_ptr<QGraphicsView> m_graphicsView;
 	std::unique_ptr<QGraphicsScene> m_scene;
 	std::unique_ptr<GridViewModel> m_gridViewModel;
+	std::unique_ptr<Space> m_space;
 };

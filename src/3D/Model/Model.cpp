@@ -2,35 +2,32 @@
 
 bool Model::CompareTextureNames::operator()(std::string const& textureName1, std::string const& textureName2) const
 {
-	// Переводим имя первой текстуры к нижнему регистру
 	std::string name1LowerCase(textureName1);
 	std::ranges::transform(name1LowerCase,
 		name1LowerCase.begin(),
 		tolower);
 
-	// Переводим имя второй текстуры к нижнему регистру
 	std::string name2LowerCase(textureName2);
 	std::ranges::transform(name2LowerCase,
 		name2LowerCase.begin(),
 		tolower);
 
-	// Возвращаем результат сравнения имен в нижнем регистре
 	return name1LowerCase < name2LowerCase;
 }
 
-Model::Model(void)
+Model::Model()
 	: m_boundingBoxMustBeUpdated(true)
 {
 }
 
 ModelMaterial& Model::AddMaterial()
 {
-	ModelMaterialPtr pMaterial(new ModelMaterial());
+	const ModelMaterialPtr pMaterial(new ModelMaterial());
 	m_materials.push_back(pMaterial);
 	return *pMaterial;
 }
 
-size_t Model::GetMeterialCount() const
+size_t Model::GetMaterialCount() const
 {
 	return m_materials.size();
 }
@@ -186,9 +183,9 @@ BoundingBox Model::GetBoundingBox() const
 		// Ограничивающий блок модели равен объединению ограничивающих блоков
 		// всех сеток, входящих в состав модели
 		BoundingBox box;
-		for (size_t i = 0; i < m_meshes.size(); ++i)
+		for (const auto& mesh : m_meshes)
 		{
-			box = box.Union(m_meshes[i]->GetBoundingBox());
+			box = box.Union(mesh->GetBoundingBox());
 		}
 		m_boundingBox = box;
 

@@ -76,7 +76,7 @@ public:
 	ModelMaterial& AddMaterial();
 
 	// Получаем количество материалов
-	size_t GetMeterialCount() const;
+	size_t GetMaterialCount() const;
 
 	// Получаем материал по его индексу
 	ModelMaterial const& GetMaterial(size_t index) const;

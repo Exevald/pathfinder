@@ -25,6 +25,14 @@ bool TextureMap::IsLoaded() const
 	return m_texture && m_texture->isCreated();
 }
 
+void TextureMap::Bind() const
+{
+	if (m_texture)
+	{
+		m_texture->bind();
+	}
+}
+
 void TextureMap::SetScale(float sx, float sy)
 {
 	m_sx = sx;

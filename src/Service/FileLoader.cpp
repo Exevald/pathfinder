@@ -28,9 +28,9 @@ Grid FileLoader::LoadAndConvert(const std::string& fileName) const
 	const auto& minCoord = totalBoundingBox.GetMinCoord();
 	const auto& maxCoord = totalBoundingBox.GetMaxCoord();
 
-	int gridSizeX = static_cast<int>(std::ceil(maxCoord.x - minCoord.x));
-	int gridSizeY = static_cast<int>(std::ceil(maxCoord.y - minCoord.y));
-	int gridSizeZ = static_cast<int>(std::ceil(maxCoord.z - minCoord.z));
+	const int gridSizeX = static_cast<int>(std::ceil(maxCoord.x - minCoord.x));
+	const int gridSizeY = static_cast<int>(std::ceil(maxCoord.y - minCoord.y));
+	const int gridSizeZ = static_cast<int>(std::ceil(maxCoord.z - minCoord.z));
 
 	Grid grid(gridSizeX, gridSizeY, gridSizeZ, 1.0, 0.5, 1.0, 1.0);
 
@@ -48,4 +48,9 @@ Grid FileLoader::LoadAndConvert(const std::string& fileName) const
 	}
 
 	return grid;
+}
+
+std::shared_ptr<Model> FileLoader::GetModel() const
+{
+	return m_meshLoader->GetModel();
 }

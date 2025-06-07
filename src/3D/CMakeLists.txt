@@ -24,6 +24,8 @@ add_library(3D STATIC
         Material/ModelMaterial.h
         Texture/TextureLoader.cpp
         Texture/TextureLoader.h
+        Model/ModelRenderer.cpp
+        Model/ModelRenderer.h
 )
 
 target_link_libraries(3D

@@ -1,9 +1,11 @@
 #include "Window.h"
+
 #include <QFileDialog>
 #include <QGraphicsRectItem>
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <iostream>
 
 Window::Window(QWidget* parent, std::unique_ptr<GridViewModel> viewModel)
 	: QMainWindow(parent)
@@ -34,13 +36,13 @@ void Window::ShowMainMenu()
 
 	layout->addWidget(titleLabel, 0, Qt::AlignLeft | Qt::AlignTop);
 
-	auto* loadCADButton = new QPushButton("Загрузить CAD-файл", this);
-	connect(loadCADButton, &QPushButton::clicked, this, &Window::OnOpenCADFile);
+	auto* loadOBJFileButton = new QPushButton("Загрузить OBJ-файл", this);
+	connect(loadOBJFileButton, &QPushButton::clicked, this, &Window::OnOpenCADFile);
 
 	auto* exitButton = new QPushButton("Выход", this);
 	connect(exitButton, &QPushButton::clicked, this, []() { QApplication::quit(); });
 
-	loadCADButton->setStyleSheet(
+	loadOBJFileButton->setStyleSheet(
 		"QPushButton {"
 		"   background-color: #0E39C7;"
 		"   color: white;"
@@ -75,7 +77,7 @@ void Window::ShowMainMenu()
 		"}");
 
 	layout->addStretch();
-	layout->addWidget(loadCADButton, 0, Qt::AlignLeft);
+	layout->addWidget(loadOBJFileButton, 0, Qt::AlignLeft);
 	layout->addWidget(exitButton, 0, Qt::AlignLeft);
 	layout->addStretch();
 
@@ -93,7 +95,7 @@ void Window::OnOpenCADFile()
 {
 	const QString filePath = QFileDialog::getOpenFileName(
 		this,
-		"Выберите CAD-файл",
+		"Выберите OBJ-файл",
 		"",
 		"(*.obj);;All Files (*)");
 
@@ -101,12 +103,12 @@ void Window::OnOpenCADFile()
 	{
 		m_gridViewModel->LoadData(filePath.toStdString());
 		Draw3DSpace();
-	}
-}
 
-void Window::OnDraw3DSpace()
-{
-	Draw3DSpace();
+		if (m_space)
+		{
+			m_space->update();
+		}
+	}
 }
 
 void Window::Draw3DSpace()
@@ -115,43 +117,49 @@ void Window::Draw3DSpace()
 	centralWidget->setStyleSheet("background-color: white;");
 	setCentralWidget(centralWidget);
 
-	auto* layout = new QVBoxLayout(centralWidget);
-	layout->setContentsMargins(50, 50, 50, 50);
+	auto* mainLayout = new QVBoxLayout(centralWidget);
+	mainLayout->setContentsMargins(50, 50, 50, 50);
 
-	auto* infoContainer = new QWidget(this);
+	m_space = std::make_unique<Space>(centralWidget);
+	m_space->setMinimumSize(800, 600);
+	if (!m_space->GetModel())
+	{
+		const auto model = m_gridViewModel->GetModel();
+		m_space->SetModel(model);
+	}
+	mainLayout->addWidget(m_space.get(), 1);
+
+	auto* infoContainer = new QWidget(centralWidget);
 	infoContainer->setFixedWidth(300);
 	infoContainer->setStyleSheet(
 		"QWidget {"
 		"   background-color: #F5F5F5;"
 		"   border-radius: 10px;"
 		"   padding: 20px;"
-		"	border: 1px solid black"
-		"	width"
+		"   border: 1px solid black;"
 		"}");
 
 	auto* infoLayout = new QVBoxLayout(infoContainer);
 	infoLayout->setSpacing(10);
 
-	auto* fileNameLabel = new QLabel("Файл: " + QString::fromStdString("tinker.obj"), this);
+	auto* fileNameLabel = new QLabel("Файл: " + QString::fromStdString("tinker.obj"), centralWidget);
 	fileNameLabel->setStyleSheet("font-size: 14px; color: black;");
 	infoLayout->addWidget(fileNameLabel);
 
-	auto* droneSizeLabel = new QLabel("Размеры дрона: 0 x 0 x 0", this);
+	auto* droneSizeLabel = new QLabel("Размеры дрона: 0 x 0 x 0", centralWidget);
 	droneSizeLabel->setStyleSheet("font-size: 14px; color: black;");
 	infoLayout->addWidget(droneSizeLabel);
 
-	auto* gridSizeLabel = new QLabel("Размер сетки: 0 x 0 x 0", this);
+	auto* gridSizeLabel = new QLabel("Размер сетки: 0 x 0 x 0", centralWidget);
 	gridSizeLabel->setStyleSheet("font-size: 14px; color: black;");
 	infoLayout->addWidget(gridSizeLabel);
 
 	double shortestPathLength = 0;
-	auto* pathLengthLabel = new QLabel("Длина кратчайшего пути: " + (shortestPathLength > 0 ? QString::number(shortestPathLength) : "Неизвестно"), this);
+	auto* pathLengthLabel = new QLabel("Длина кратчайшего пути: " + (shortestPathLength > 0 ? QString::number(shortestPathLength) : "Неизвестно"), centralWidget);
 	pathLengthLabel->setStyleSheet("font-size: 14px; color: black;");
 	infoLayout->addWidget(pathLengthLabel);
 
-	infoLayout->addWidget(infoContainer, 0, Qt::AlignRight);
-
-	auto* backButton = new QPushButton("Выход в меню", this);
+	auto* backButton = new QPushButton("Выход в меню", centralWidget);
 	connect(backButton, &QPushButton::clicked, this, &Window::OnBackToMenu);
 	backButton->setStyleSheet(
 		"QPushButton {"
@@ -168,15 +176,10 @@ void Window::Draw3DSpace()
 		"   background-color: #0C2FA1;"
 		"}");
 
-	layout->addSpacing(20);
-	layout->addWidget(backButton, 0, Qt::AlignLeft);
-
-	auto* mainLayout = new QVBoxLayout();
-	mainLayout->addLayout(layout);
+	mainLayout->addWidget(backButton, 0, Qt::AlignLeft);
 	mainLayout->addSpacing(20);
-	mainLayout->addLayout(infoLayout);
-
-	centralWidget->setLayout(mainLayout);
+	mainLayout->addWidget(infoContainer, 0, Qt::AlignRight);
+	mainLayout->addStretch();
 }
 
 void Window::OnBackToMenu()

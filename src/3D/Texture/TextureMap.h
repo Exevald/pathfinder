@@ -29,6 +29,8 @@ public:
 	// Связан ли текстурный объект с данной текстурной картой
 	[[nodiscard]] bool IsLoaded() const;
 
+	void Bind() const;
+
 private:
 	std::unique_ptr<QOpenGLTexture> m_texture;
 	float m_sx;

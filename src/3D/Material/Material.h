@@ -1,4 +1,5 @@
 #pragma once
+
 #include <QOpenGLShaderProgram>
 
 class Material
@@ -11,7 +12,7 @@ public:
 	void SetSpecular(float r, float g, float b, float a = 1.0f);
 	void SetShininess(float shininess);
 
-	void Apply(QOpenGLShaderProgram* program, const QString& uniformPrefix = "material") const;
+	void Activate(QOpenGLShaderProgram* program, const QString& uniformPrefix = "material") const;
 
 private:
 	float m_shininess{};

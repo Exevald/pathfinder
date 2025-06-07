@@ -28,7 +28,7 @@ void Material::SetShininess(float shininess)
 	m_shininess = shininess;
 }
 
-void Material::Apply(QOpenGLShaderProgram* program, const QString& uniformPrefix) const
+void Material::Activate(QOpenGLShaderProgram* program, const QString& uniformPrefix) const
 {
 	program->setUniformValue((uniformPrefix + ".diffuse").toUtf8().constData(), m_diffuse);
 	program->setUniformValue((uniformPrefix + ".ambient").toUtf8().constData(), m_ambient);

@@ -77,8 +77,8 @@ std::unique_ptr<QOpenGLTexture> LoadTexture(
 	const std::string& name,
 	const std::string& baseFolder)
 {
-	QString texturePath = QString::fromStdString(baseFolder + name);
-	QImage image(texturePath);
+	const QString texturePath = QString::fromStdString(baseFolder + name);
+	const QImage image(texturePath);
 	if (image.isNull())
 		throw std::runtime_error("Failed to load texture: " + texturePath.toStdString());
 
@@ -95,6 +95,7 @@ ObjLoader::ObjLoader()
 	, m_vertexBufferUsage(GL_STATIC_DRAW)
 	, m_indexBufferUsage(GL_STATIC_DRAW)
 	, m_ignoreMissingTextures(true)
+	, m_model(new Model())
 {
 }
 
@@ -107,6 +108,11 @@ std::vector<Mesh> ObjLoader::GetMeshes(const std::string& fileName)
 		meshes.push_back(ConvertShapeToMesh(shape, m_attrib));
 	}
 	return meshes;
+}
+
+std::shared_ptr<Model> ObjLoader::GetModel() const
+{
+	return m_model;
 }
 
 void ObjLoader::IgnoreMissingTextures(bool ignore)
@@ -143,20 +149,19 @@ void ObjLoader::LoadFile(const std::string& fileName)
 		std::cout << "Warning: " << warn << std::endl;
 	}
 
-	ProcessMaterials(m_materials, m_model, baseFolder);
-	ProcessShapes(m_attrib, m_shapes, m_materials, m_model);
+	ProcessMaterials(m_materials, baseFolder);
+	ProcessShapes(m_attrib, m_shapes, m_materials);
 
 	m_isLoaded = true;
 }
 
 void ObjLoader::ProcessMaterials(
 	const std::vector<tinyobj::material_t>& materials,
-	Model& model,
 	const std::string& baseFolder) const
 {
 	for (const auto& mat : materials)
 	{
-		ModelMaterial& material = model.AddMaterial();
+		ModelMaterial& material = m_model->AddMaterial();
 		Material& matInfo = material.GetMaterial();
 		matInfo.SetAmbient(mat.ambient[0], mat.ambient[1], mat.ambient[2]);
 		matInfo.SetDiffuse(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
@@ -181,7 +186,7 @@ void ObjLoader::ProcessMaterials(
 	}
 	if (materials.empty())
 	{
-		ModelMaterial& material = model.AddMaterial();
+		ModelMaterial& material = m_model->AddMaterial();
 		Material& matInfo = material.GetMaterial();
 		matInfo.SetAmbient(0.2f, 0.2f, 0.2f);
 		matInfo.SetDiffuse(0.8f, 0.8f, 0.8f);
@@ -193,7 +198,6 @@ void ObjLoader::ProcessMaterials(
 void ObjLoader::ProcessShapes(
 	const tinyobj::attrib_t& attrib,
 	const std::vector<tinyobj::shape_t>& shapes,
-	const std::vector<tinyobj::material_t>& materials,
-	Model& model) const
+	const std::vector<tinyobj::material_t>& materials) const
 {
 }
