@@ -23,7 +23,6 @@ export const usePathfindingVM = () => {
 
     const getCellByPosition = (pos: THREE.Vector3) => {
         if (!grid) {
-            console.log("NO GRID")
             return null
         }
         const ix = Math.floor(pos.x / grid.getCellLength());

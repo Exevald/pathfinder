@@ -49,7 +49,8 @@ export const loadOBJMTL = action((ctx, objFile: File, mtlFile: File) => {
             const obj = objLoader.parse(objContent);
             objObjectAtom(ctx, obj);
 
-            let bbox = new THREE.Box3();
+            const bbox = new THREE.Box3().setFromObject(obj);
+            const center = bbox.getCenter(new THREE.Vector3());
             obj.traverse(child => {
                 if ((child as THREE.Mesh).isMesh) {
                     bbox.expandByObject(child);
@@ -62,7 +63,8 @@ export const loadOBJMTL = action((ctx, objFile: File, mtlFile: File) => {
             const layerHeight = 1;
             const droneRadius = 1;
             const k = 1;
-            const grid = new Grid(sizeX, sizeY, sizeZ, layerHeight, droneRadius, k, cellLength);
+            const offset: [number, number, number] = [bbox.min.x, bbox.min.y, bbox.min.z];
+            const grid = new Grid(sizeX, sizeY, sizeZ, layerHeight, droneRadius, k, cellLength, offset);
             gridAtom(ctx, grid);
 
             startCellAtom(ctx, null);

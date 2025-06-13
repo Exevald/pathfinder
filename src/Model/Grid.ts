@@ -66,8 +66,9 @@ export class Grid {
     private readonly cellLength: number;
     private readonly cells: Cell[][][];
     private readonly obstacles: Obstacle[];
+    private readonly offset: [number, number, number];
 
-    constructor(sizeX: number, sizeY: number, sizeZ: number, layerHeight: number, droneRadius: number, k: number, cellLength: number) {
+    constructor(sizeX: number, sizeY: number, sizeZ: number, layerHeight: number, droneRadius: number, k: number, cellLength: number, offset: [number, number, number] = [0, 0, 0]) {
         this.gridSizeX = sizeX;
         this.gridSizeY = sizeY;
         this.gridSizeZ = sizeZ;
@@ -75,6 +76,7 @@ export class Grid {
         this.droneRadius = droneRadius;
         this.k = k;
         this.cellLength = cellLength;
+        this.offset = offset;
         this.obstacles = [];
         this.cells = Array.from({length: sizeX}, (_, x) =>
             Array.from({length: sizeY}, (_, y) =>
@@ -101,6 +103,22 @@ export class Grid {
 
     getCellLength(): number {
         return this.cellLength
+    }
+
+    getLayerLength(): number {
+        return this.layerHeight
+    }
+
+    getGridSizeX(): number {
+        return this.gridSizeX;
+    }
+
+    getGridSizeY(): number {
+        return this.gridSizeY;
+    }
+
+    getGridSizeZ(): number {
+        return this.gridSizeZ;
     }
 
     findPath(start: Cell, goal: Cell): PathPoint[] {
@@ -155,20 +173,6 @@ export class Grid {
             z >= 0 && z < this.gridSizeZ
         ) {
             return this.cells[x][y][z];
-        }
-        return null;
-    }
-
-    getCellIndicesByCoords(x: number, y: number, z: number): { x: number, y: number, z: number } | null {
-        const ix = Math.floor(x / this.cellLength);
-        const iy = Math.floor(y / this.cellLength);
-        const iz = Math.floor(z / this.layerHeight);
-        if (
-            ix >= 0 && ix < this.gridSizeX &&
-            iy >= 0 && iy < this.gridSizeY &&
-            iz >= 0 && iz < this.gridSizeZ
-        ) {
-            return {x: ix, y: iy, z: iz};
         }
         return null;
     }
@@ -281,5 +285,9 @@ export class Grid {
         const dz = (aC.z - bC.z) * this.layerHeight;
         const fv = 2.0;
         return Math.sqrt(dx * dx + dy * dy + (dz * fv) * (dz * fv));
+    }
+
+    getOffset(): [number, number, number] {
+        return this.offset;
     }
 }
