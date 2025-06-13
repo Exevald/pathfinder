@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QOpenGLFunctions_3_2_Core>
-#include <stdexcept>
+#include <QOpenGLVersionFunctionsFactory>
 
 class BufferObjectBase : protected QOpenGLFunctions_3_2_Core
 {
@@ -21,7 +21,10 @@ public:
 	BufferObjectBase(BufferObjectBase const&) = delete;
 	BufferObjectBase& operator=(BufferObjectBase const&) = delete;
 
-	explicit operator GLuint() const { return m_bufferId; }
+	explicit operator GLuint() const
+	{
+		return m_bufferId;
+	}
 
 	GLuint Detach()
 	{
@@ -55,8 +58,15 @@ protected:
 		const_cast<BufferObjectBase*>(this)->BindTo(target);
 	}
 
-	void SetBuffer(GLuint bufferId) { m_bufferId = bufferId; }
-	[[nodiscard]] GLuint GetBufferId() const { return m_bufferId; }
+	void SetBuffer(GLuint bufferId)
+	{
+		m_bufferId = bufferId;
+	}
+
+	[[nodiscard]] GLuint GetBufferId() const
+	{
+		return m_bufferId;
+	}
 
 private:
 	GLuint m_bufferId = 0;
@@ -66,6 +76,8 @@ template <bool t_managed, GLenum target>
 class BufferObjectImpl final : public BufferObjectBase
 {
 public:
+	using BufferObjectBase::GetBufferId;
+
 	explicit BufferObjectImpl(GLuint bufferId = 0)
 		: BufferObjectBase(bufferId)
 	{
@@ -97,26 +109,42 @@ public:
 
 	static bool UnmapBuffer()
 	{
-		QOpenGLFunctions_3_2_Core glFuncs;
-		return glFuncs.glUnmapBuffer(target);
+		auto* glFuncs = GetGLFunctions();
+		return glFuncs->glUnmapBuffer(target);
 	}
 
 	static void BufferData(GLsizeiptr size, const void* data, GLenum usage)
 	{
-		QOpenGLFunctions_3_2_Core glFuncs;
-		glFuncs.glBufferData(target, size, data, usage);
+		auto* glFuncs = GetGLFunctions();
+		glFuncs->glBufferData(target, size, data, usage);
 	}
 
 	static void BufferSubData(GLintptr offset, GLsizeiptr size, const void* data)
 	{
-		QOpenGLFunctions_3_2_Core glFuncs;
-		glFuncs.glBufferSubData(target, offset, size, data);
+		auto* glFuncs = GetGLFunctions();
+		glFuncs->glBufferSubData(target, offset, size, data);
 	}
 
 	BufferObjectImpl& operator=(GLuint bufferId)
 	{
 		Attach(bufferId);
 		return *this;
+	}
+
+private:
+	[[nodiscard]] static QOpenGLFunctions_3_2_Core* GetGLFunctions()
+	{
+		QOpenGLContext* ctx = QOpenGLContext::currentContext();
+		if (!ctx)
+		{
+			throw std::runtime_error("Buffer context is not currently supported");
+		}
+		auto* glFuncs = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_3_2_Core>(ctx);
+		if (!glFuncs)
+		{
+			throw std::runtime_error("QOpenGLFunctions_3_2_Core not available for current context");
+		}
+		return glFuncs;
 	}
 };
 

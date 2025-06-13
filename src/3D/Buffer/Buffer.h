@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BufferObject.h"
-
 #include <QOpenGLFunctions>
 #include <QOpenGLFunctions_3_2_Core>
 #include <stdexcept>
@@ -26,7 +25,9 @@ public:
 		if (!m_created)
 		{
 			if (m_useVBO && m_buffer.GetBufferId() == 0)
+			{
 				m_buffer.Create();
+			}
 			m_created = true;
 		}
 	}
@@ -34,12 +35,18 @@ public:
 	void Bind() const
 	{
 		if (!m_created)
+		{
 			throw std::logic_error("Buffer not created");
+		}
 
 		if (m_useVBO)
+		{
 			m_buffer.Bind();
+		}
 		else
+		{
 			QOpenGLContext::currentContext()->functions()->glBindBuffer(target, 0);
+		}
 
 		UpdateCurrentBufferPointer(false, this);
 	}
@@ -75,13 +82,15 @@ public:
 	[[nodiscard]] const void* GetBufferPointer() const
 	{
 		if (!m_hasData)
+		{
 			throw std::logic_error("Buffer contains no data");
+		}
 
 		UpdateCurrentBufferPointer(true, this);
 		return m_useVBO ? nullptr : m_data.data();
 	}
 
-	~BufferImpl()
+	~BufferImpl() override
 	{
 		UpdateCurrentBufferPointer(false, nullptr);
 	}
@@ -95,7 +104,9 @@ private:
 		{
 			currentBuffer = thisPtr;
 			if (callBind && thisPtr)
+			{
 				thisPtr->Bind();
+			}
 		}
 	}
 

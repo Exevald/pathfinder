@@ -7,7 +7,7 @@ BoundingBox::BoundingBox()
 {
 }
 
-BoundingBox::BoundingBox(const CVector3f& minCoord, const CVector3f& maxCoord)
+BoundingBox::BoundingBox(const Vector3f& minCoord, const Vector3f& maxCoord)
 	: m_isEmpty(false)
 	, m_minCoord(minCoord)
 	, m_maxCoord(maxCoord)
@@ -34,18 +34,18 @@ BoundingBox BoundingBox::Union(const BoundingBox& other) const
 		return *this;
 	}
 	return {
-		CVector3f(
+		Vector3f(
 			std::min(m_minCoord.x, other.m_minCoord.x),
 			std::min(m_minCoord.y, other.m_minCoord.y),
 			std::min(m_minCoord.z, other.m_minCoord.z)),
-		CVector3f(
+		Vector3f(
 			std::max(m_maxCoord.x, other.m_maxCoord.x),
 			std::max(m_maxCoord.y, other.m_maxCoord.y),
 			std::max(m_maxCoord.z, other.m_maxCoord.z))
 	};
 }
 
-const CVector3f& BoundingBox::GetMinCoord() const
+const Vector3f& BoundingBox::GetMinCoord() const
 {
 	if (m_isEmpty)
 	{
@@ -54,7 +54,7 @@ const CVector3f& BoundingBox::GetMinCoord() const
 	return m_minCoord;
 }
 
-const CVector3f& BoundingBox::GetMaxCoord() const
+const Vector3f& BoundingBox::GetMaxCoord() const
 {
 	if (m_isEmpty)
 	{
@@ -63,7 +63,7 @@ const CVector3f& BoundingBox::GetMaxCoord() const
 	return m_maxCoord;
 }
 
-CVector3f BoundingBox::GetSize() const
+Vector3f BoundingBox::GetSize() const
 {
 	if (m_isEmpty)
 	{
@@ -72,7 +72,7 @@ CVector3f BoundingBox::GetSize() const
 	return m_maxCoord - m_minCoord;
 }
 
-CVector3f BoundingBox::GetCenter() const
+Vector3f BoundingBox::GetCenter() const
 {
 	if (m_isEmpty)
 	{

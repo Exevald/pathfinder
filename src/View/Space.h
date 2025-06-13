@@ -17,6 +17,10 @@ public:
 	~Space() override;
 	void SetModel(std::shared_ptr<Model> model);
 	[[nodiscard]] std::shared_ptr<Model> GetModel() const;
+	[[nodiscard]] bool isGLInitialized() const { return m_glInitialized; }
+
+signals:
+	void glInitialized();
 
 protected:
 	void initializeGL() override;
@@ -41,4 +45,6 @@ private:
 	QVector3D m_cameraPosition;
 	QVector3D m_cameraTarget;
 	float m_zoom = 1.0f;
+
+	bool m_glInitialized = false;
 };

@@ -4,8 +4,9 @@
 #include <QGraphicsRectItem>
 #include <QLabel>
 #include <QPushButton>
+#include <QTimer>
 #include <QVBoxLayout>
-#include <iostream>
+#include <memory>
 
 Window::Window(QWidget* parent, std::unique_ptr<GridViewModel> viewModel)
 	: QMainWindow(parent)
@@ -19,7 +20,6 @@ void Window::ShowMainMenu()
 {
 	auto* centralWidget = new QWidget(this);
 	centralWidget->setStyleSheet("background-color: white;");
-	setCentralWidget(centralWidget);
 	centralWidget->setMinimumSize(1920, 1080);
 
 	auto* layout = new QVBoxLayout(centralWidget);
@@ -31,13 +31,13 @@ void Window::ShowMainMenu()
 		"   font-size: 50px;"
 		"   font-weight: 600;"
 		"   color: black;"
-		" 	margin-bottom: 100px;"
+		"   margin-bottom: 100px;"
 		"}");
 
 	layout->addWidget(titleLabel, 0, Qt::AlignLeft | Qt::AlignTop);
 
 	auto* loadOBJFileButton = new QPushButton("Загрузить OBJ-файл", this);
-	connect(loadOBJFileButton, &QPushButton::clicked, this, &Window::OnOpenCADFile);
+	connect(loadOBJFileButton, &QPushButton::clicked, this, &Window::OnOpenOBJFile);
 
 	auto* exitButton = new QPushButton("Выход", this);
 	connect(exitButton, &QPushButton::clicked, this, []() { QApplication::quit(); });
@@ -49,8 +49,8 @@ void Window::ShowMainMenu()
 		"   border: none;"
 		"   border-radius: 5px;"
 		"   padding: 20px 25px;"
-		"	font-size: 18px;"
-		"	font-weight: 500;"
+		"   font-size: 18px;"
+		"   font-weight: 500;"
 		"}"
 		"QPushButton:hover {"
 		"   background-color: #0E34B4;"
@@ -66,8 +66,8 @@ void Window::ShowMainMenu()
 		"   border: none;"
 		"   border-radius: 5px;"
 		"   padding: 20px 25px;"
-		"	font-size: 18px;"
-		"	font-weight: 500;"
+		"   font-size: 18px;"
+		"   font-weight: 500;"
 		"}"
 		"QPushButton:hover {"
 		"   background-color: #0E34B4;"
@@ -89,9 +89,11 @@ void Window::ShowMainMenu()
 	layout->addWidget(iconLabel);
 
 	layout->setSpacing(20);
+
+	setCentralWidget(centralWidget);
 }
 
-void Window::OnOpenCADFile()
+void Window::OnOpenOBJFile()
 {
 	const QString filePath = QFileDialog::getOpenFileName(
 		this,
@@ -101,18 +103,35 @@ void Window::OnOpenCADFile()
 
 	if (!filePath.isEmpty())
 	{
-		m_gridViewModel->LoadData(filePath.toStdString());
 		Draw3DSpace();
 
 		if (m_space)
 		{
-			m_space->update();
+			if (m_space->isGLInitialized())
+			{
+				m_gridViewModel->LoadData(filePath.toStdString());
+				m_space->SetModel(m_gridViewModel->GetModel());
+				m_space->update();
+			}
+			else
+			{
+				connect(m_space.get(), &Space::glInitialized, this, [this, filePath]() {
+					m_gridViewModel->LoadData(filePath.toStdString());
+					if (m_space)
+					{
+						m_space->SetModel(m_gridViewModel->GetModel());
+						m_space->update();
+					}
+					disconnect(m_space.get(), nullptr, this, nullptr);
+				});
+			}
 		}
 	}
 }
 
 void Window::Draw3DSpace()
 {
+	// Старый центральный виджет будет удалён автоматически
 	auto* centralWidget = new QWidget(this);
 	centralWidget->setStyleSheet("background-color: white;");
 	setCentralWidget(centralWidget);
@@ -122,11 +141,6 @@ void Window::Draw3DSpace()
 
 	m_space = std::make_unique<Space>(centralWidget);
 	m_space->setMinimumSize(800, 600);
-	if (!m_space->GetModel())
-	{
-		const auto model = m_gridViewModel->GetModel();
-		m_space->SetModel(model);
-	}
 	mainLayout->addWidget(m_space.get(), 1);
 
 	auto* infoContainer = new QWidget(centralWidget);

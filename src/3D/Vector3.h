@@ -80,5 +80,5 @@ Vector3<T> Cross(Vector3<T> const& a, Vector3<T> const& b)
 		a.x * b.y - a.y * b.x);
 }
 
-typedef Vector3<float> CVector3f;
-typedef Vector3<double> CVector3d;
+typedef Vector3<float> Vector3f;
+typedef Vector3<double> Vector3d;

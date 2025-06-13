@@ -20,17 +20,19 @@ set(RESOURCES
         ${CMAKE_SOURCE_DIR}/res/Compass.svg
 )
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets Concurrent)
 find_package(GTest REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 include_directories(/usr/include/lib3ds)
 
-include_directories(${Qt6Core_INCLUDE_DIRS}
-                  ${Qt6Gui_INCLUDE_DIRS}
-                  ${Qt6OpenGL_INCLUDE_DIRS}
-                  ${Qt6Widgets_INCLUDE_DIRS}
-                  ${Qt6OpenGLWidgets_INCLUDE_DIRS})
+include_directories(
+        ${Qt6Core_INCLUDE_DIRS}
+        ${Qt6Gui_INCLUDE_DIRS}
+        ${Qt6OpenGL_INCLUDE_DIRS}
+        ${Qt6Widgets_INCLUDE_DIRS}
+        ${Qt6OpenGLWidgets_INCLUDE_DIRS}
+        ${Qt6Concurrent_INCLUDE_DIRS})
 
 enable_testing()
 

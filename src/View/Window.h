@@ -2,6 +2,7 @@
 
 #include "../ViewModel/GridViewModel.h"
 #include "Space.h"
+#include <QProgressDialog>
 #include <QtCore/QString>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QGraphicsView>
@@ -23,7 +24,7 @@ public:
 	explicit Window(QWidget* parent = nullptr, std::unique_ptr<GridViewModel> viewModel = nullptr);
 
 private slots:
-	void OnOpenCADFile();
+	void OnOpenOBJFile();
 	void OnBackToMenu();
 
 private:
@@ -34,4 +35,5 @@ private:
 	std::unique_ptr<QGraphicsScene> m_scene;
 	std::unique_ptr<GridViewModel> m_gridViewModel;
 	std::unique_ptr<Space> m_space;
+	std::unique_ptr<QProgressDialog> m_loaderDialog = nullptr;
 };

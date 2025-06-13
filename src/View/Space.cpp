@@ -39,12 +39,15 @@ void Space::initializeGL()
 	{
 		qCritical() << "Shader link error:" << m_shader.log();
 	}
+
+	m_glInitialized = true;
+	emit glInitialized();
 }
 
 void Space::resizeGL(int w, int h)
 {
 	m_projection.setToIdentity();
-	m_projection.perspective(45.0f, float(w) / float(h), 0.1f, 100.0f);
+	m_projection.perspective(45.0f, static_cast<float>(w) / static_cast<float>(h), 0.1f, 100.0f);
 	m_rotationController->ResizeWindow(w, h);
 }
 
@@ -72,7 +75,7 @@ void Space::mouseReleaseEvent(QMouseEvent* event)
 {
 	if (event->button() == Qt::LeftButton)
 	{
-		QPoint pos = event->pos();
+		const QPoint pos = event->pos();
 		m_rotationController->OnMouse(0, 1, pos.x(), pos.y());
 	}
 }
