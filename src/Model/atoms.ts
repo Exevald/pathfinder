@@ -4,6 +4,7 @@ import {Cell} from './Cell';
 import * as THREE from 'three';
 import {OBJLoader} from 'three/examples/jsm/loaders/OBJLoader';
 import {MTLLoader} from 'three/examples/jsm/loaders/MTLLoader';
+import {Obstacle} from './Obstacle';
 
 export const objFileAtom = atom<File | null>(null, 'objFile');
 export const mtlFileAtom = atom<File | null>(null, 'mtlFile');
@@ -12,6 +13,7 @@ export const gridAtom = atom<Grid | null>(null, 'grid');
 export const startCellAtom = atom<Cell | null>(null, 'startCell');
 export const endCellAtom = atom<Cell | null>(null, 'endCell');
 export const pathAtom = atom<[number, number, number, number][] | null>(null, 'path');
+export const rawPathAtom = atom<[number, number, number][] | null>(null, 'rawPath');
 
 export const setStartCell = action((ctx, cell: Cell) => {
     startCellAtom(ctx, cell);
@@ -26,6 +28,16 @@ export const calculatePath = action((ctx) => {
     const start = ctx.get(startCellAtom);
     const end = ctx.get(endCellAtom);
     if (grid && start && end) {
+        const rawPathCells = grid.findRawPath(start, end);
+        if (rawPathCells) {
+            const rawPath = rawPathCells.map((cell: any) => {
+                const {x, y, z} = cell.getCoords();
+                return [x, y, z] as [number, number, number];
+            });
+            rawPathAtom(ctx, rawPath as [number, number, number][]);
+        } else {
+            rawPathAtom(ctx, null);
+        }
         const path = grid.findPath(start, end);
         pathAtom(ctx, path);
     }
@@ -71,6 +83,24 @@ export const loadOBJMTL = action((ctx, objFile: File, mtlFile: File) => {
                 -((bbox.max.z - bbox.min.z) / 2)
             ];
             const grid = new Grid(sizeX, sizeY, sizeZ, layerHeight, droneRadius, k, cellLength, offset);
+
+            obj.traverse(child => {
+                if ((child as THREE.Mesh).isMesh) {
+                    const mesh = child as THREE.Mesh;
+                    const meshBbox = new THREE.Box3().setFromObject(mesh);
+                    const minX = Math.floor((meshBbox.min.x - offset[0]) / cellLength);
+                    const maxX = Math.ceil((meshBbox.max.x - offset[0]) / cellLength) - 1;
+                    const minY = Math.floor((meshBbox.min.y - offset[1]) / cellLength);
+                    const maxY = Math.ceil((meshBbox.max.y - offset[1]) / cellLength) - 1;
+                    const minZ = Math.floor((meshBbox.min.z - offset[2]) / layerHeight);
+                    const maxZ = Math.ceil((meshBbox.max.z - offset[2]) / layerHeight) - 1;
+                    grid.addObstacle(
+                        new Obstacle(
+                            minX, maxX, minY, maxY, minZ, maxZ
+                        )
+                    );
+                }
+            });
 
             gridAtom(ctx, grid);
             startCellAtom(ctx, null);

@@ -1,7 +1,7 @@
 import {useAtom} from '@reatom/npm-react';
 import {
     objFileAtom, mtlFileAtom, objObjectAtom, gridAtom,
-    startCellAtom, endCellAtom, pathAtom,
+    startCellAtom, endCellAtom, pathAtom, rawPathAtom,
     setStartCell, setEndCell, calculatePath, loadOBJMTL
 } from '../Model/atoms';
 import {useAction} from '@reatom/npm-react';
@@ -15,6 +15,7 @@ export const usePathfindingVM = () => {
     const [startCell] = useAtom(startCellAtom);
     const [endCell] = useAtom(endCellAtom);
     const [path] = useAtom(pathAtom);
+    const [rawPath] = useAtom(rawPathAtom);
 
     const setStart = useAction(setStartCell);
     const setEnd = useAction(setEndCell);
@@ -67,6 +68,7 @@ export const usePathfindingVM = () => {
         startCell,
         endCell,
         path,
+        rawPath,
         setStart,
         setEnd,
         calcPath,

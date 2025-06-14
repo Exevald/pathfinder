@@ -166,6 +166,50 @@ export class Grid {
         return [];
     }
 
+    findRawPath(start: Cell, goal: Cell): Cell[] | null {
+        if (!this.isCellInGrid(start) || !this.isCellInGrid(goal)) {
+            return null;
+        }
+        type NodeWithPriority = { cell: Cell, priority: number };
+        const openSet: NodeWithPriority[] = [];
+        const closedSet = new Set<Cell>();
+        const cameFrom = new Map<Cell, Cell | undefined>();
+        const gScore = new Map<Cell, number>();
+
+        gScore.set(start, 0);
+        openSet.push({cell: start, priority: this.heuristic(start, goal)});
+
+        while (openSet.length > 0) {
+            openSet.sort((a, b) => a.priority - b.priority);
+            const current = openSet.shift()!.cell;
+
+            if (current === goal) {
+                const path: Cell[] = [];
+                let currentPtr: Cell | undefined = current;
+                while (currentPtr) {
+                    path.push(currentPtr);
+                    currentPtr = cameFrom.get(currentPtr);
+                }
+                path.reverse();
+                return path;
+            }
+
+            closedSet.add(current);
+
+            for (const neighbor of this.getValidNeighbors(current)) {
+                if (closedSet.has(neighbor)) continue;
+                const tentativeG = (gScore.get(current) ?? Infinity) + neighbor.getCost();
+                if (!gScore.has(neighbor) || tentativeG < (gScore.get(neighbor) ?? Infinity)) {
+                    cameFrom.set(neighbor, current);
+                    gScore.set(neighbor, tentativeG);
+                    const f = tentativeG + this.heuristic(neighbor, goal);
+                    openSet.push({cell: neighbor, priority: f});
+                }
+            }
+        }
+        return null;
+    }
+
     getCellByIndices(x: number, y: number, z: number): Cell | null {
         if (
             x >= 0 && x < this.gridSizeX &&
@@ -272,8 +316,8 @@ export class Grid {
         }
         if (minDistance === Number.POSITIVE_INFINITY) return 50.0;
         let cost = Math.exp(-this.k * (minDistance - this.droneRadius)) * 253.0;
-        cost = Math.max(50.0, Math.min(cost, 253.0));
         cost += z * this.layerHeight * this.k;
+        cost = Math.max(50.0, Math.min(cost, 253.0));
         return cost;
     }
 
