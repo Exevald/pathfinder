@@ -178,11 +178,11 @@ export class Grid {
     }
 
     getCellCenter(x: number, y: number, z: number): [number, number, number] {
-        return [
-            (x + 0.5) * this.cellLength,
-            (y + 0.5) * this.cellLength,
-            (z + 0.5) * this.layerHeight,
-        ];
+        const cx = this.offset[0] + (x + 0.5) * this.cellLength;
+        const cy = this.offset[2] + (z + 0.5) * this.layerHeight;
+        const cz = this.offset[1] + (y + 0.5) * this.cellLength;
+
+        return [cx, cy, cz];
     }
 
     private isCellInGrid(cell: Cell): boolean {

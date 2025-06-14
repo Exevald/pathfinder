@@ -50,23 +50,29 @@ export const loadOBJMTL = action((ctx, objFile: File, mtlFile: File) => {
             objObjectAtom(ctx, obj);
 
             const bbox = new THREE.Box3().setFromObject(obj);
-            const center = bbox.getCenter(new THREE.Vector3());
             obj.traverse(child => {
                 if ((child as THREE.Mesh).isMesh) {
                     bbox.expandByObject(child);
                 }
             });
-            const sizeX = Math.ceil(bbox.max.x - bbox.min.x);
-            const sizeY = Math.ceil(bbox.max.y - bbox.min.y);
-            const sizeZ = Math.ceil(bbox.max.z - bbox.min.z);
+            const center = bbox.getCenter(new THREE.Vector3());
+            obj.position.set(-center.x, -center.y, -center.z);
+
             const cellLength = 1;
             const layerHeight = 1;
             const droneRadius = 1;
             const k = 1;
-            const offset: [number, number, number] = [bbox.min.x, bbox.min.y, bbox.min.z];
+            const sizeX = Math.ceil((bbox.max.x - bbox.min.x) / cellLength);
+            const sizeY = Math.ceil((bbox.max.y - bbox.min.y) / cellLength);
+            const sizeZ = Math.ceil((bbox.max.z - bbox.min.z) / layerHeight);
+            const offset: [number, number, number] = [
+                -((bbox.max.x - bbox.min.x) / 2),
+                -((bbox.max.y - bbox.min.y) / 2),
+                -((bbox.max.z - bbox.min.z) / 2)
+            ];
             const grid = new Grid(sizeX, sizeY, sizeZ, layerHeight, droneRadius, k, cellLength, offset);
-            gridAtom(ctx, grid);
 
+            gridAtom(ctx, grid);
             startCellAtom(ctx, null);
             endCellAtom(ctx, null);
             pathAtom(ctx, null);

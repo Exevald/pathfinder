@@ -7,7 +7,7 @@ import * as THREE from 'three';
 const FPSMovement: React.FC<{ enabled: boolean }> = ({enabled}) => {
     const {camera} = useThree();
     const move = useRef({forward: false, backward: false, left: false, right: false, up: false});
-    const speed = 0.2;
+    const speed = 0.1;
 
     useEffect(() => {
         if (!enabled) return;
@@ -136,6 +136,7 @@ const SceneView: React.FC = () => {
     const [controlsEnabled, setControlsEnabled] = useState(false);
     const [pickMode, setPickMode] = useState<'start' | 'end' | null>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
+    const [showGrid, setShowGrid] = useState(true);
 
     useEffect(() => {
         const handlePointerLockChange = () => {
@@ -169,6 +170,7 @@ const SceneView: React.FC = () => {
                 <button onClick={() => setPickMode('start')}>Выбрать старт</button>
                 <button onClick={() => setPickMode('end')}>Выбрать финиш</button>
                 <button onClick={calcPath} disabled={!startCell || !endCell}>Построить путь</button>
+                <button onClick={() => setShowGrid(v => !v)}>{showGrid ? 'Скрыть сетку' : 'Показать сетку'}</button>
             </div>
             {!controlsEnabled && (
                 <button
@@ -186,6 +188,22 @@ const SceneView: React.FC = () => {
                 >
                     Войти в режим управления камерой
                 </button>
+            )}
+            {controlsEnabled && (
+                <div style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 10,
+                    pointerEvents: 'none',
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.7)',
+                    border: '2px solid white',
+                    boxSizing: 'border-box',
+                }}/>
             )}
             <Canvas
                 camera={{position: [10, 10, 10], fov: 60}}
@@ -205,7 +223,7 @@ const SceneView: React.FC = () => {
                     </mesh>
                 )}
                 {objObject && <primitive object={objObject}/>}
-                {grid && (() => {
+                {grid && showGrid && (() => {
                     const cellLength = grid.getCellLength();
                     const layerHeight = grid.getLayerLength();
                     const gridSizeX = grid.getGridSizeX();
@@ -229,7 +247,11 @@ const SceneView: React.FC = () => {
                             }
                         }
                     }
-                    return <group>{allCells}</group>;
+                    return <group>
+                        <axesHelper args={[Math.max(gridSizeX, gridSizeY, gridSizeZ) * cellLength * 2]}
+                                    position={[offset[0], offset[1], offset[2]]}/>
+                        {allCells}
+                    </group>;
                 })()}
                 {startCell && (() => {
                     const pos = getCellCenterVector(startCell);
@@ -258,7 +280,7 @@ const SceneView: React.FC = () => {
                             if (!pos) return null;
                             return (
                                 <mesh key={idx} position={pos}>
-                                    <sphereGeometry args={[0.2]}/>
+                                    <sphereGeometry args={[0.03]}/>
                                     <meshStandardMaterial color="red"/>
                                 </mesh>
                             );
