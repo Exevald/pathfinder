@@ -9,7 +9,7 @@ export class Cell {
     constructor(coords: Coords, cellLength: number) {
         this.coords = coords;
         this.cellLength = cellLength;
-        this.cost = 1.0;
+        this.cost = 50.0;
         this.connections = [];
     }
 

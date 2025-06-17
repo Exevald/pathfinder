@@ -1,11 +1,11 @@
-import {useAtom} from '@reatom/npm-react';
+import {useAtom, useAction} from '@reatom/npm-react';
 import {
     objFileAtom, mtlFileAtom, objObjectAtom, gridAtom,
-    startCellAtom, endCellAtom, pathAtom,
+    startCellAtom, endCellAtom, pathAtom, isLoadingAtom,
     setStartCell, setEndCell, calculatePath, loadOBJMTL
 } from '../Model/atoms';
-import {useAction} from '@reatom/npm-react';
 import * as THREE from 'three';
+import {Cell} from '../Model/Cell';
 
 export const usePathfindingVM = () => {
     const [objFile, setObjFile] = useAtom(objFileAtom);
@@ -15,44 +15,30 @@ export const usePathfindingVM = () => {
     const [startCell] = useAtom(startCellAtom);
     const [endCell] = useAtom(endCellAtom);
     const [path] = useAtom(pathAtom);
+    const [isLoading] = useAtom(isLoadingAtom);
 
     const setStart = useAction(setStartCell);
     const setEnd = useAction(setEndCell);
     const calcPath = useAction(calculatePath);
-    const loadObjMtl = useAction(loadOBJMTL);
+    const loadObjMtl = useAction((ctx, objFile: File, mtlFile: File) => {
+        loadOBJMTL(ctx, {objFile, mtlFile});
+    });
 
-    const getCellByPosition = (pos: THREE.Vector3) => {
-        if (!grid) {
-            return null;
-        }
-        const offset = grid.getOffset ? grid.getOffset() : [0, 0, 0];
-        const sizeX = grid.getGridSizeX();
-        const sizeY = grid.getGridSizeY();
-        const sizeZ = grid.getGridSizeZ();
+    const getCellByPosition = (pos: THREE.Vector3): Cell | null => {
+        if (!grid) return null;
+
+        const offset = grid.getOffset();
         const cellLength = grid.getCellLength();
         const layerHeight = grid.getLayerLength();
 
-        if (
-            pos.x < offset[0] || pos.x > offset[0] + sizeX * cellLength ||
-            pos.y < offset[1] || pos.y > offset[1] + sizeY * cellLength ||
-            pos.z < offset[2] || pos.z > offset[2] + sizeZ * layerHeight
-        ) {
-            return null;
-        }
         const ix = Math.floor((pos.x - offset[0]) / cellLength);
         const iy = Math.floor((pos.y - offset[1]) / cellLength);
         const iz = Math.floor((pos.z - offset[2]) / layerHeight);
-        if (
-            ix < 0 || ix >= sizeX ||
-            iy < 0 || iy >= sizeY ||
-            iz < 0 || iz >= sizeZ
-        ) {
-            return null;
-        }
+
         return grid.getCellByIndices(ix, iy, iz);
     };
 
-    const getCellCenterVector = (cell: any) => {
+    const getCellCenterVector = (cell: Cell): THREE.Vector3 | null => {
         if (!grid || !cell) return null;
         const {x, y, z} = cell.getCoords();
         const [cx, cy, cz] = grid.getCellCenter(x, y, z);
@@ -67,6 +53,7 @@ export const usePathfindingVM = () => {
         startCell,
         endCell,
         path,
+        isLoading,
         setStart,
         setEnd,
         calcPath,
