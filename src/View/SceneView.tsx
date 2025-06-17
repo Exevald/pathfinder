@@ -133,7 +133,7 @@ const CellEdges: React.FC<{
             {showText && (
                 <Text
                     position={[center[0], center[1], center[2]]}
-                    fontSize={0.2}
+                    fontSize={0.05}
                     color="white"
                     anchorX="center"
                     anchorY="middle"
@@ -181,7 +181,6 @@ const SceneView: React.FC = () => {
         if (!cell) return;
         if (pickMode === 'start') setStart(cell);
         if (pickMode === 'end') setEnd(cell);
-        console.log(cell, "PIZDATO")
         setPickMode(null);
     };
 
@@ -276,14 +275,16 @@ const SceneView: React.FC = () => {
                     for (let x = 0; x < gridSizeX; ++x) {
                         for (let y = 0; y < gridSizeY; ++y) {
                             for (let z = 0; z < gridSizeZ; ++z) {
-                                const [cx, cy, cz] = grid.getCellCenter(x, y, z);
+                                const cx = offset[0] + (x + 0.5) * cellLength;
+                                const cy = offset[1] + (y + 0.5) * cellLength;
+                                const cz = offset[2] + (z + 0.5) * layerHeight;
                                 const cell = grid.getCellByIndices(x, y, z);
                                 if (cell) {
                                     allCells.push(
                                         <CellEdges
                                             key={`cell-${x}-${y}-${z}`}
-                                            center={[cx, cz, cy]}
-                                            size={[cellLength, layerHeight, cellLength]}
+                                            center={[cx, cy, cz]}
+                                            size={[cellLength, cellLength, layerHeight]}
                                             cost={cell.getCost()}
                                             showText={showCostText}
                                         />
@@ -294,7 +295,7 @@ const SceneView: React.FC = () => {
                     }
                     return <group>
                         <axesHelper args={[Math.max(gridSizeX, gridSizeY, gridSizeZ) * cellLength * 2]}
-                                    position={[offset[0], offset[2], offset[1]]}/>
+                                    position={[offset[0], offset[1], offset[2]]}/>
                         {allCells}
                     </group>;
                 })()}
@@ -302,8 +303,8 @@ const SceneView: React.FC = () => {
                     const pos = getCellCenterVector(startCell);
                     if (!pos) return null;
                     return (
-                        <mesh position={pos}>
-                            <sphereGeometry args={[0.3]}/>
+                        <mesh position={[pos.x, pos.z, pos.y]}>
+                            <sphereGeometry args={[0.15]}/>
                             <meshStandardMaterial color="green"/>
                         </mesh>
                     );
@@ -312,8 +313,8 @@ const SceneView: React.FC = () => {
                     const pos = getCellCenterVector(endCell);
                     if (!pos) return null;
                     return (
-                        <mesh position={pos}>
-                            <sphereGeometry args={[0.3]}/>
+                        <mesh position={[pos.x, pos.z, pos.y]}>
+                            <sphereGeometry args={[0.15]}/>
                             <meshStandardMaterial color="blue"/>
                         </mesh>
                     );
@@ -324,7 +325,7 @@ const SceneView: React.FC = () => {
                             if (!grid) return null;
                             const [cx, cy, cz] = grid.getCellCenter(x, y, z);
                             return (
-                                <mesh key={idx} position={[cx, cz, cy]}>
+                                <mesh key={idx} position={[cx, cy, cz]}>
                                     <sphereGeometry args={[0.03]}/>
                                     <meshStandardMaterial color="red"/>
                                 </mesh>

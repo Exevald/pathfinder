@@ -67,7 +67,7 @@ export const loadOBJMTL = action((ctx, {objFile, mtlFile}: { objFile: File; mtlF
 
                 const cellLength = 1;
                 const layerHeight = 1;
-                const droneRadius = 1.0;
+                const droneRadius = 0.05;
                 const k = 0.5;
 
                 const geometries: THREE.BufferGeometry[] = [];
@@ -81,14 +81,13 @@ export const loadOBJMTL = action((ctx, {objFile, mtlFile}: { objFile: File; mtlF
                 const staticGeometry = BufferGeometryUtils.mergeGeometries(geometries);
                 const bvh = new MeshBVH(staticGeometry);
 
-                const modelSize = bbox.getSize(new THREE.Vector3());
-                const sizeX = Math.ceil(modelSize.x / cellLength);
-                const sizeY = Math.ceil(modelSize.z / cellLength);
-                const sizeZ = Math.ceil(modelSize.y / layerHeight);
+                const sizeX = Math.ceil((bbox.max.x - bbox.min.x) / cellLength);
+                const sizeY = Math.ceil((bbox.max.y - bbox.min.y) / cellLength);
+                const sizeZ = Math.ceil((bbox.max.z - bbox.min.z) / layerHeight);
                 const offset: [number, number, number] = [
-                    bbox.min.x - center.x,
-                    bbox.min.z - center.z,
-                    bbox.min.y - center.y
+                    -((bbox.max.x - bbox.min.x) / 2),
+                    -((bbox.max.y - bbox.min.y) / 2),
+                    -((bbox.max.z - bbox.min.z) / 2)
                 ];
                 const grid = new Grid(sizeX, sizeY, sizeZ, layerHeight, cellLength, offset);
 
