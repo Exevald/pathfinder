@@ -3,6 +3,7 @@ import {Canvas, useFrame, useThree} from '@react-three/fiber';
 import {PointerLockControls} from '@react-three/drei';
 import {usePathfindingVM} from '../ViewModel/PathfindingViewModel';
 import * as THREE from 'three';
+import {Text} from '@react-three/drei';
 
 const FPSMovement: React.FC<{ enabled: boolean }> = ({enabled}) => {
     const {camera} = useThree();
@@ -108,21 +109,39 @@ function getBoxEdges(center: [number, number, number], size: [number, number, nu
     return edges.flat();
 }
 
-const CellEdges: React.FC<{ center: [number, number, number], size: [number, number, number] }> = ({center, size}) => {
+const CellEdges: React.FC<{
+    center: [number, number, number],
+    size: [number, number, number],
+    cost: number,
+    showText: boolean
+}> = ({center, size, cost, showText}) => {
     const points = getBoxEdges(center, size).map(([x, y, z]) => new THREE.Vector3(x, y, z));
     return (
-        <lineSegments>
-            <bufferGeometry>
-                <bufferAttribute
-                    attach="attributes-position"
-                    args={[
-                        new Float32Array(points.flatMap(p => [p.x, p.y, p.z])),
-                        3
-                    ]}
-                />
-            </bufferGeometry>
-            <lineBasicMaterial color="red" linewidth={1.5}/>
-        </lineSegments>
+        <group>
+            <lineSegments>
+                <bufferGeometry>
+                    <bufferAttribute
+                        attach="attributes-position"
+                        args={[
+                            new Float32Array(points.flatMap(p => [p.x, p.y, p.z])),
+                            3
+                        ]}
+                    />
+                </bufferGeometry>
+                <lineBasicMaterial color="red" linewidth={1.5}/>
+            </lineSegments>
+            {showText && (
+                <Text
+                    position={[center[0], center[1], center[2]]}
+                    fontSize={0.2}
+                    color="white"
+                    anchorX="center"
+                    anchorY="middle"
+                >
+                    {cost.toFixed(1)}
+                </Text>
+            )}
+        </group>
     );
 };
 
@@ -137,6 +156,7 @@ const SceneView: React.FC = () => {
     const [pickMode, setPickMode] = useState<'start' | 'end' | null>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
     const [showGrid, setShowGrid] = useState(true);
+    const [showCostText, setShowCostText] = useState(false);
 
     useEffect(() => {
         const handlePointerLockChange = () => {
@@ -171,6 +191,9 @@ const SceneView: React.FC = () => {
                 <button onClick={() => setPickMode('end')}>Выбрать финиш</button>
                 <button onClick={calcPath} disabled={!startCell || !endCell}>Построить путь</button>
                 <button onClick={() => setShowGrid(v => !v)}>{showGrid ? 'Скрыть сетку' : 'Показать сетку'}</button>
+                <button onClick={() => setShowCostText(v => !v)}>
+                    {showCostText ? 'Скрыть стоимость' : 'Показать стоимость'}
+                </button>
             </div>
             {!controlsEnabled && (
                 <button
@@ -213,14 +236,32 @@ const SceneView: React.FC = () => {
                 {controlsEnabled && <PointerLockControls/>}
                 <FPSMovement enabled={controlsEnabled}/>
                 {pickMode && (
-                    <mesh
-                        position={[0, 0, 0]}
-                        rotation={[-Math.PI / 2, 0, 0]}
-                        onClick={handleSceneClick}
-                    >
-                        <planeGeometry args={[100, 100]}/>
-                        <meshBasicMaterial transparent opacity={0}/>
-                    </mesh>
+                    <group>
+                        <mesh
+                            position={[0, 0, 0]}
+                            rotation={[-Math.PI / 2, 0, 0]}
+                            onClick={handleSceneClick}
+                        >
+                            <planeGeometry args={[1000, 1000]}/>
+                            <meshBasicMaterial transparent opacity={0}/>
+                        </mesh>
+                        <mesh
+                            position={[0, 0, 0]}
+                            rotation={[0, 0, 0]}
+                            onClick={handleSceneClick}
+                        >
+                            <planeGeometry args={[1000, 1000]}/>
+                            <meshBasicMaterial transparent opacity={0}/>
+                        </mesh>
+                        <mesh
+                            position={[0, 0, 0]}
+                            rotation={[0, Math.PI / 2, 0]}
+                            onClick={handleSceneClick}
+                        >
+                            <planeGeometry args={[1000, 1000]}/>
+                            <meshBasicMaterial transparent opacity={0}/>
+                        </mesh>
+                    </group>
                 )}
                 {objObject && <primitive object={objObject}/>}
                 {grid && showGrid && (() => {
@@ -237,13 +278,18 @@ const SceneView: React.FC = () => {
                                 const cx = offset[0] + (x + 0.5) * cellLength;
                                 const cy = offset[1] + (y + 0.5) * cellLength;
                                 const cz = offset[2] + (z + 0.5) * layerHeight;
-                                allCells.push(
-                                    <CellEdges
-                                        key={`cell-${x}-${y}-${z}`}
-                                        center={[cx, cy, cz]}
-                                        size={[cellLength, cellLength, layerHeight]}
-                                    />
-                                );
+                                const cell = grid.getCellByIndices(x, y, z);
+                                if (cell) {
+                                    allCells.push(
+                                        <CellEdges
+                                            key={`cell-${x}-${y}-${z}`}
+                                            center={[cx, cy, cz]}
+                                            size={[cellLength, cellLength, layerHeight]}
+                                            cost={cell.getCost()}
+                                            showText={showCostText}
+                                        />
+                                    );
+                                }
                             }
                         }
                     }
