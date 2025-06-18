@@ -1,14 +1,54 @@
 import {Cell} from './Cell';
 import {Coords} from './Coords';
+import {BezierCurve} from "./BezierCurve";
 
 export type PathPoint = [number, number, number, number];
 
+function evaluateSegmentSafety(segment: Cell[]): number {
+    let totalCost = 0;
+    for (const cell of segment) {
+        totalCost += cell.getCost();
+    }
+    return totalCost / segment.length;
+}
+
+function calculateSegmentTime(safetyScore: number): number {
+    const baseTime = 1.0;
+    const slowdownFactor = 2.0;
+    return baseTime + (safetyScore - 50.0) / 254.0 * slowdownFactor;
+}
+
 function smoothPath(path: Cell[], cellHeight: number): PathPoint[] {
     if (path.length === 0) return [];
-    return path.map(cell => {
-        const {x, y, z} = cell.getCoords();
-        return [x * cell.getCellLength(), y * cell.getCellLength(), z * cellHeight, 0];
+    const waypoints: [number, number, number][] = path.map(cell => {
+        const coords = cell.getCoords();
+        const cellLength = cell.getCellLength();
+        return [
+            coords.x * cellLength,
+            coords.y * cellLength,
+            coords.z * cellHeight
+        ];
     });
+    if (waypoints.length < 2) return [];
+
+    const curve = new BezierCurve(waypoints);
+    const segmentsCount = 100;
+    let totalTime = 0.0;
+    const smoothPathWithSpeed: PathPoint[] = [];
+
+    for (let i = 0; i <= segmentsCount; ++i) {
+        let t = i / segmentsCount;
+        if (i === segmentsCount) t = 1.0;
+        const point = curve.evaluate(t);
+
+        const segmentIndex = Math.min(Math.floor(i * (path.length - 1) / segmentsCount), path.length - 2);
+        const safetyScore = evaluateSegmentSafety([path[segmentIndex], path[segmentIndex + 1]]);
+        const segmentTime = calculateSegmentTime(safetyScore);
+
+        totalTime += segmentTime / segmentsCount;
+        smoothPathWithSpeed.push([point[0], point[1], point[2], totalTime]);
+    }
+    return smoothPathWithSpeed;
 }
 
 export class Grid {

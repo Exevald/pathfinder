@@ -67,7 +67,7 @@ export const loadOBJMTL = action((ctx, {objFile, mtlFile}: { objFile: File; mtlF
 
                 const cellLength = 1;
                 const layerHeight = 1;
-                const droneRadius = 0.05;
+                const droneRadius = 0.1;
                 const k = 0.5;
 
                 const geometries: THREE.BufferGeometry[] = [];
@@ -133,4 +133,73 @@ export const loadOBJMTL = action((ctx, {objFile, mtlFile}: { objFile: File; mtlF
         objReader.readAsText(objFile);
     };
     mtlReader.readAsText(mtlFile);
+});
+
+export type Mode = 'obj' | 'sandbox';
+
+export interface Obstacle {
+    id: string;
+    position: [number, number, number];
+    size: [number, number, number];
+    color: string;
+}
+
+export const modeAtom = atom<Mode>('obj', 'mode');
+export const obstaclesAtom = atom<Obstacle[]>([], 'obstacles');
+
+export const addObstacle = action((ctx, obstacle: Omit<Obstacle, 'id'>) => {
+    const obstacles = ctx.get(obstaclesAtom);
+    const newObstacle = {
+        ...obstacle,
+        id: Math.random().toString(36).substr(2, 9)
+    };
+    obstaclesAtom(ctx, [...obstacles, newObstacle]);
+});
+
+export const removeObstacle = action((ctx, id: string) => {
+    const obstacles = ctx.get(obstaclesAtom);
+    obstaclesAtom(ctx, obstacles.filter(o => o.id !== id));
+});
+
+export const updateObstacle = action((ctx, id: string, updates: Partial<Omit<Obstacle, 'id'>>) => {
+    const obstacles = ctx.get(obstaclesAtom);
+    obstaclesAtom(ctx, obstacles.map(o => 
+        o.id === id ? { ...o, ...updates } : o
+    ));
+});
+
+export const setMode = action((ctx, mode: Mode) => {
+    modeAtom(ctx, mode);
+});
+
+export const saveSandboxState = action((ctx) => {
+    const obstacles = ctx.get(obstaclesAtom);
+    const state = {
+        obstacles,
+        version: '1.0'
+    };
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sandbox-state.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
+export const loadSandboxState = action((ctx, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const state = JSON.parse(e.target?.result as string);
+            if (state.version === '1.0' && Array.isArray(state.obstacles)) {
+                obstaclesAtom(ctx, state.obstacles);
+            }
+        } catch (error) {
+            console.error('Failed to load sandbox state:', error);
+        }
+    };
+    reader.readAsText(file);
 });
