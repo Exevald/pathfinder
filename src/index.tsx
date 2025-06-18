@@ -10,6 +10,8 @@ import {useAtom, useAction} from '@reatom/npm-react';
 import {modeAtom, setMode} from './Model/atoms';
 import {PathfindingViewModel} from './ViewModel/PathfindingViewModel';
 import {ViewModelContext} from './ViewModel/ViewModelContext';
+import {SandboxViewModel} from './ViewModel/SandboxViewModel';
+import {SandboxViewModelContext} from './ViewModel/SandboxViewModelContext';
 
 const ModeSelector: React.FC = () => {
     const [mode] = useAtom(modeAtom);
@@ -53,20 +55,31 @@ const ModeSelector: React.FC = () => {
 const App: React.FC = () => {
     const [mode] = useAtom(modeAtom);
     const ctx = useCtx();
-    const viewModelContext = useMemo(() => new PathfindingViewModel(ctx), [ctx]);
+    const pathfindingViewModel = useMemo(() => new PathfindingViewModel(ctx), [ctx]);
+    const sandboxViewModel = useMemo(() => new SandboxViewModel(ctx), [ctx]);
 
     return (
-        <ViewModelContext.Provider value={viewModelContext}>
-            <div style={{display: 'flex', flexDirection: 'row', height: '100vh'}}>
-                <div style={{width: 300, padding: 16, background: '#f7f7f7', borderRight: '1px solid #eee'}}>
-                    <ModeSelector/>
-                    {mode === 'obj' && <Controls/>}
-                </div>
-                <div style={{flex: 1, height: '100%'}}>
-                    {mode === 'obj' ? <SceneView/> : <SandboxView/>}
-                </div>
+        <div style={{display: 'flex', flexDirection: 'row', height: '100vh'}}>
+            <div style={{width: 300, padding: 16, background: '#f7f7f7', borderRight: '1px solid #eee'}}>
+                <ModeSelector/>
+                {mode === 'obj' && (
+                    <ViewModelContext.Provider value={pathfindingViewModel}>
+                        <Controls/>
+                    </ViewModelContext.Provider>
+                )}
             </div>
-        </ViewModelContext.Provider>
+            <div style={{flex: 1, height: '100%'}}>
+                {mode === 'obj' ? (
+                    <ViewModelContext.Provider value={pathfindingViewModel}>
+                        <SceneView/>
+                    </ViewModelContext.Provider>
+                ) : (
+                    <SandboxViewModelContext.Provider value={sandboxViewModel}>
+                        <SandboxView/>
+                    </SandboxViewModelContext.Provider>
+                )}
+            </div>
+        </div>
     );
 };
 

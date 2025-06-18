@@ -1,20 +1,12 @@
 import React, {useState, useRef, useEffect} from 'react';
 import {Canvas, useFrame, useThree} from '@react-three/fiber';
 import {PointerLockControls, OrbitControls, Text} from '@react-three/drei';
-import {useAtom, useAction} from '@reatom/npm-react';
-import {
-    modeAtom,
-    obstaclesAtom,
-    addObstacle,
-    removeObstacle,
-    updateObstacle,
-    saveSandboxState,
-    loadSandboxState
-} from '../Model/atoms';
+import {useAction} from '@reatom/npm-react';
 import * as THREE from 'three';
-import {Grid, PathPoint} from '../Model/Grid';
+import {Grid} from '../Model/Grid';
 import {Cell} from '../Model/Cell';
-import type {Obstacle} from '../Model/atoms';
+import {useSandboxVM} from '../ViewModel/SandboxViewModelContext';
+import {updateObstacle} from "../Model/atoms";
 
 type EditMode = 'move' | 'rotate' | 'scale' | null;
 
@@ -95,12 +87,6 @@ const FPSMovement: React.FC<{ enabled: boolean }> = ({enabled}) => {
     });
 
     return null;
-};
-
-const getArrowTipPosition = (axis: 0 | 1 | 2, size: [number, number, number]) => {
-    if (axis === 0) return [0.5, 0, 0]; // X
-    if (axis === 1) return [0, 0.5, 0]; // Y
-    return [0, 0, 0.5]; // Z
 };
 
 const ArrowManipulator: React.FC<{
@@ -375,22 +361,11 @@ const EditToolbar: React.FC<{
 };
 
 const SandboxView: React.FC = () => {
-    const [mode] = useAtom(modeAtom);
-    const [obstacles] = useAtom(obstaclesAtom);
-    const addNewObstacle = useAction(addObstacle);
-    const removeObstacleById = useAction(removeObstacle);
     const updateObstacleById = useAction(updateObstacle);
-    const saveState = useAction(saveSandboxState);
-    const loadState = useAction(loadSandboxState);
-    const [isFlightMode, setIsFlightMode] = useState(false);
     const [selectedObstacle, setSelectedObstacle] = useState<string | null>(null);
-    const [editMode, setEditMode] = useState<EditMode>(null);
-    const [pickMode, setPickMode] = useState<'start' | 'end' | null>(null);
+    const [getPickMode, setgetPickMode] = useState<'start' | 'end' | null>(null);
     const [showGrid, setShowGrid] = useState(true);
     const [showCostText, setShowCostText] = useState(false);
-    const [startCell, setStartCell] = useState<Cell | null>(null);
-    const [endCell, setEndCell] = useState<Cell | null>(null);
-    const [path, setPath] = useState<PathPoint[] | null>(null);
     const [grid, setGrid] = useState<Grid | null>(null);
     const [showCanvas, setShowCanvas] = useState(true);
 
@@ -399,13 +374,7 @@ const SandboxView: React.FC = () => {
     const GRID_SIZE_Z = 3;
     const CELL_SIZE = 1;
 
-    const handleAddObstacle = () => {
-        addNewObstacle({
-            position: [0, 0, 0],
-            size: [1, 1, 1],
-            color: '#' + Math.floor(Math.random() * 16777215).toString(16)
-        });
-    };
+    const sandboxViewModel = useSandboxVM();
 
     const handleObstacleUpdate = (id: string, updates: {
         position?: [number, number, number],
@@ -414,48 +383,30 @@ const SandboxView: React.FC = () => {
         updateObstacleById(id, updates);
     };
 
-    const toggleMode = () => {
-        setIsFlightMode(!isFlightMode);
-        setSelectedObstacle(null);
-        setEditMode(null);
-    };
-
-    const handleDuplicateObstacle = () => {
-        if (!selectedObstacle) return;
-        const obstacle = obstacles.find(o => o.id === selectedObstacle);
-        if (!obstacle) return;
-
-        addNewObstacle({
-            position: [
-                obstacle.position[0] + 1,
-                obstacle.position[1],
-                obstacle.position[2]
-            ],
-            size: [...obstacle.size],
-            color: obstacle.color
-        });
-    };
-
-    const handleResetObstacle = () => {
-        if (!selectedObstacle) return;
-        updateObstacleById(selectedObstacle, {
-            position: [0, 0, 0],
-            size: [1, 1, 1]
-        });
-    };
-
     const handleSelectObstacle = (id: string) => {
         setSelectedObstacle(id);
-        setEditMode('move');
+        sandboxViewModel.setEditMode('move');
     };
 
-    React.useEffect(() => {
+    const handleSceneClick = (e: any) => {
+        if (e.eventObject === e.currentTarget) {
+            if (!sandboxViewModel.assertFlightMode) {
+                sandboxViewModel.selectObstacle(null);
+            }
+        }
+
+        if (sandboxViewModel.getPickMode) {
+            sandboxViewModel.handleGridClick(e.point);
+        }
+    };
+
+    useEffect(() => {
         if (!selectedObstacle) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             let axis: 0 | 1 | 2 | null = null;
             let delta = 0;
             const step = 0.1;
-            const obstacle = obstacles.find(o => o.id === selectedObstacle);
+            const obstacle = sandboxViewModel.getObstacles.find(o => o.id === selectedObstacle);
             if (!obstacle) return;
             if (!e.shiftKey) {
                 if (e.key === 'ArrowUp') {
@@ -511,118 +462,81 @@ const SandboxView: React.FC = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedObstacle, updateObstacleById, obstacles]);
+    }, [selectedObstacle, updateObstacleById, sandboxViewModel.getObstacles]);
+
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && getPickMode) {
+                setgetPickMode(null);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [getPickMode]);
 
     useEffect(() => {
-        setGrid(new Grid(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, CELL_SIZE, CELL_SIZE, [0, 0, 0]));
+        const offset: [number, number, number] = [0, 0, 0];
+        setGrid(new Grid(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z, CELL_SIZE, CELL_SIZE, offset));
     }, []);
-
-    function recalculateGridCosts(grid: Grid, obstacles: Obstacle[]) {
-        for (let x = 0; x < grid.getGridSizeX(); ++x) {
-            for (let y = 0; y < grid.getGridSizeY(); ++y) {
-                for (let z = 0; z < grid.getGridSizeZ(); ++z) {
-                    const cell = grid.getCellByIndices(x, y, z);
-                    if (!cell) continue;
-                    const [cx, cy, cz] = grid.getCellCenter(x, y, z);
-                    let isInside = false;
-                    for (const obs of obstacles) {
-                        const [ox, oy, oz] = obs.position;
-                        const [sx, sy, sz] = obs.size;
-                        if (
-                            cx >= ox - sx / 2 && cx <= ox + sx / 2 &&
-                            cy >= oy - sy / 2 && cy <= oy + sy / 2 &&
-                            cz >= oz - sz / 2 && cz <= oz + sz / 2
-                        ) {
-                            isInside = true;
-                            break;
-                        }
-                    }
-                    cell.setCost(isInside ? 254 : 50);
-                }
-            }
-        }
-    }
 
     useEffect(() => {
         if (grid) {
-            recalculateGridCosts(grid, obstacles);
+            sandboxViewModel.recalculateGridCosts();
         }
-    }, [obstacles, grid]);
+    });
 
-    const getCellByPosition = (pos: THREE.Vector3): Cell | null => {
+    const getCellByPosition = React.useCallback((pos: THREE.Vector3): Cell | null => {
         if (!grid) return null;
-        const offset = grid.getOffset();
+        const offset = [0, 0, 0]
         const cellLength = grid.getCellLength();
         const layerHeight = grid.getLayerLength();
         const ix = Math.floor((pos.x - offset[0]) / cellLength);
-        const iz = Math.floor((pos.z - offset[2]) / layerHeight);
-        const iy = Math.floor((pos.y - offset[1]) / cellLength);
+        const iz = Math.floor((pos.z - offset[2]) / cellLength);
+        let iy = Math.floor((pos.y - offset[1]) / layerHeight);
+        if (iy < 0) {
+            iy = 0
+        }
         return grid.getCellByIndices(ix, iy, iz);
-    };
+    }, [grid]);
 
-    const getCellCenterVector = (cell: Cell): THREE.Vector3 | null => {
+    const getCellCenterVector = React.useCallback((cell: Cell): THREE.Vector3 | null => {
         if (!grid || !cell) return null;
         const {x, y, z} = cell.getCoords();
         const [cx, cy, cz] = grid.getCellCenter(x, y, z);
         return new THREE.Vector3(cx, cy, cz);
-    };
-
-    const handleSandboxClick = (e: any) => {
-        if (!pickMode) return;
-        let camera = e.camera;
-        let scene = e.scene;
-        if (!camera || !scene) return;
-        const mouse = new THREE.Vector2(0, 0);
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(scene.children, true);
-        if (intersects.length === 0) return;
-        const point = intersects[0].point;
-        const cell = getCellByPosition(point);
-        if (!cell) return;
-        if (pickMode === 'start') setStartCell(cell);
-        if (pickMode === 'end') setEndCell(cell);
-        setPickMode(null);
-    };
-
-    const calcPath = () => {
-        if (!grid || !startCell || !endCell) return;
-        setPath(grid.findPath(startCell, endCell));
-    };
+    }, [grid]);
 
     useEffect(() => {
-        if (!isFlightMode && document.pointerLockElement) {
+        if (!sandboxViewModel.assertFlightMode && document.pointerLockElement) {
             document.exitPointerLock();
             setTimeout(() => setShowCanvas(false), 100);
             setTimeout(() => setShowCanvas(true), 120);
-        } else if (isFlightMode && !showCanvas) {
+        } else if (sandboxViewModel.assertFlightMode && !showCanvas) {
             setShowCanvas(true);
         }
-    }, [isFlightMode, showCanvas]);
+    }, [sandboxViewModel.assertFlightMode, showCanvas]);
 
     return (
         <div style={{position: 'relative', width: '100%', height: '100%'}}>
             <div style={{position: 'absolute', zIndex: 2, left: 20, top: 20}}>
-                <button onClick={toggleMode}>
-                    {isFlightMode ? 'Режим редактирования' : 'Режим полёта'}
-                </button>
-                {!isFlightMode && (
-                    <>
-                        <button onClick={handleAddObstacle}>Добавить препятствие</button>
-                        <EditToolbar
-                            editMode={editMode}
-                            onModeChange={setEditMode}
-                            onDelete={selectedObstacle ? () => removeObstacleById(selectedObstacle) : () => {
-                            }}
-                            onDuplicate={selectedObstacle ? handleDuplicateObstacle : () => {
-                            }}
-                            onReset={selectedObstacle ? handleResetObstacle : () => {
-                            }}
-                        />
-                    </>
+                <div>
+                    <button onClick={sandboxViewModel.toggleFlightMode}>
+                        {sandboxViewModel.assertFlightMode ? 'Режим редактирования' : 'Режим полёта'}
+                    </button>
+                    {!sandboxViewModel.assertFlightMode &&
+                        <button onClick={sandboxViewModel.addObstacle}>Добавить препятствие</button>}
+                </div>
+                {!sandboxViewModel.assertFlightMode && sandboxViewModel.getSelectedObstacleId && (
+                    <EditToolbar
+                        editMode={sandboxViewModel.getEditMode}
+                        onModeChange={sandboxViewModel.setEditMode}
+                        onDelete={sandboxViewModel.removeSelectedObstacle}
+                        onDuplicate={sandboxViewModel.duplicateSelectedObstacle}
+                        onReset={sandboxViewModel.resetSelectedObstacle}
+                    />
                 )}
                 <div style={{marginTop: 16}}>
-                    <button onClick={() => saveState()}>Сохранить состояние</button>
+                    <button onClick={() => sandboxViewModel.saveState()}>Сохранить состояние</button>
                     <label style={{marginLeft: 8}}>
                         Загрузить состояние:
                         <input
@@ -630,7 +544,9 @@ const SandboxView: React.FC = () => {
                             accept=".json"
                             onChange={e => {
                                 const file = e.target.files?.[0];
-                                if (file) loadState(file);
+                                if (file) {
+                                    sandboxViewModel.loadState(file);
+                                }
                             }}
                             style={{display: 'none'}}
                         />
@@ -644,29 +560,85 @@ const SandboxView: React.FC = () => {
                 </div>
             </div>
             <div style={{position: 'absolute', zIndex: 2, left: 20, top: 120}}>
-                <button onClick={() => setPickMode('start')}>Выбрать старт</button>
-                <button onClick={() => setPickMode('end')}>Выбрать финиш</button>
-                <button onClick={calcPath} disabled={!startCell || !endCell}>Построить путь</button>
-                <button onClick={() => setShowGrid(v => !v)}>{showGrid ? 'Скрыть сетку' : 'Показать сетку'}</button>
+                <button
+                    onClick={() => sandboxViewModel.setPickMode('start')}
+                    style={{
+                        background: sandboxViewModel.getPickMode === 'start' ? '#4CAF50' : '#fff',
+                        color: sandboxViewModel.getPickMode === 'start' ? 'white' : 'black',
+                        border: '1px solid #ccc',
+                        padding: '8px 16px',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    {sandboxViewModel.getPickMode === 'start' ? 'Выберите старт (кликните на сетку)' : 'Выбрать старт'}
+                </button>
+                <button
+                    onClick={() => sandboxViewModel.setPickMode('end')}
+                    style={{
+                        background: sandboxViewModel.getPickMode === 'end' ? '#4CAF50' : '#fff',
+                        color: sandboxViewModel.getPickMode === 'end' ? 'white' : 'black',
+                        border: '1px solid #ccc',
+                        padding: '8px 16px',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    {sandboxViewModel.getPickMode === 'end' ? 'Выберите финиш (кликните на сетку)' : 'Выбрать финиш'}
+                </button>
+                <button onClick={sandboxViewModel.calculatePath}
+                        disabled={!sandboxViewModel.getStartCell || !sandboxViewModel.getEndCell}>Построить путь
+                </button>
+                <button
+                    onClick={() => setShowGrid(v => !v)}>{showGrid ? 'Скрыть сетку' : 'Показать сетку'}</button>
                 <button onClick={() => setShowCostText(v => !v)}>
                     {showCostText ? 'Скрыть стоимость' : 'Показать стоимость'}
                 </button>
                 <button onClick={() => {
-                    if (grid) recalculateGridCosts(grid, obstacles);
+                    if (grid) {
+                        sandboxViewModel.recalculateGridCosts();
+                    }
                 }}>
                     Пересчитать стоимости
                 </button>
+                {sandboxViewModel.getPickMode && (
+                    <div style={{
+                        marginTop: 8,
+                        padding: 8,
+                        background: '#fff3cd',
+                        border: '1px solid #ffeaa7',
+                        borderRadius: 4,
+                        color: '#856404'
+                    }}>
+                        Режим выбора активен. Кликните на сетку для
+                        выбора {getPickMode === 'start' ? 'начальной' : 'конечной'} точки.
+                        <button
+                            onClick={() => sandboxViewModel.setPickMode(null)}
+                            style={{
+                                marginLeft: 8,
+                                background: '#dc3545',
+                                color: 'white',
+                                border: 'none',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                            }}
+                        >
+                            Отменить
+                        </button>
+                    </div>
+                )}
             </div>
             {showCanvas && (
                 <Canvas
-                    key={isFlightMode ? 'flight' : 'edit'}
-                    camera={{position: [GRID_SIZE_X / 2, GRID_SIZE_Y * 1.5, GRID_SIZE_Z * 2], fov: 60}}
+                    key={sandboxViewModel.assertFlightMode ? 'flight' : 'edit'}
+                    camera={{position: [0, GRID_SIZE_Y * 1.5, 0], fov: 60}}
                     style={{width: '100%', height: '100%'}}
-                    onPointerDown={handleSandboxClick}
                 >
                     <ambientLight intensity={0.7}/>
                     <pointLight position={[10, 10, 10]}/>
-                    {isFlightMode ? (
+                    {sandboxViewModel.assertFlightMode ? (
                         <>
                             <PointerLockControls/>
                             <FPSMovement enabled={true}/>
@@ -674,9 +646,37 @@ const SandboxView: React.FC = () => {
                     ) : (
                         <OrbitControls/>
                     )}
-                    <gridHelper args={[20, 20]}/>
+                    <gridHelper args={[GRID_SIZE_X, GRID_SIZE_X]} position={[GRID_SIZE_X / 2, 0, GRID_SIZE_Y / 2]}/>
                     <axesHelper args={[5]}/>
-                    {obstacles.map((obstacle) => (
+                    {sandboxViewModel.getPickMode && (
+                        <group>
+                            <mesh
+                                position={[0, 0, 0]}
+                                rotation={[-Math.PI / 2, 0, 0]}
+                                onClick={handleSceneClick}
+                            >
+                                <planeGeometry args={[1000, 1000]}/>
+                                <meshBasicMaterial transparent opacity={0}/>
+                            </mesh>
+                            <mesh
+                                position={[0, 0, 0]}
+                                rotation={[0, 0, 0]}
+                                onClick={handleSceneClick}
+                            >
+                                <planeGeometry args={[1000, 1000]}/>
+                                <meshBasicMaterial transparent opacity={0}/>
+                            </mesh>
+                            <mesh
+                                position={[0, 0, 0]}
+                                rotation={[0, Math.PI / 2, 0]}
+                                onClick={handleSceneClick}
+                            >
+                                <planeGeometry args={[1000, 1000]}/>
+                                <meshBasicMaterial transparent opacity={0}/>
+                            </mesh>
+                        </group>
+                    )}
+                    {sandboxViewModel.getObstacles.map((obstacle) => (
                         <ObstacleObject
                             key={obstacle.id}
                             id={obstacle.id}
@@ -685,9 +685,9 @@ const SandboxView: React.FC = () => {
                             color={obstacle.color}
                             onUpdate={(updates) => handleObstacleUpdate(obstacle.id, updates)}
                             isSelected={selectedObstacle === obstacle.id}
-                            editMode={editMode}
+                            editMode={sandboxViewModel.getEditMode}
                             onSelect={handleSelectObstacle}
-                            isFlightMode={isFlightMode}
+                            isFlightMode={sandboxViewModel.assertFlightMode}
                         />
                     ))}
                     {grid && showGrid && (() => {
@@ -721,8 +721,8 @@ const SandboxView: React.FC = () => {
                         }
                         return <group>{allCells}</group>;
                     })()}
-                    {startCell && (() => {
-                        const pos = getCellCenterVector(startCell);
+                    {sandboxViewModel.getStartCell && (() => {
+                        const pos = getCellCenterVector(sandboxViewModel.getStartCell);
                         if (!pos) return null;
                         return (
                             <mesh position={[pos.x, pos.y, pos.z]}>
@@ -731,8 +731,8 @@ const SandboxView: React.FC = () => {
                             </mesh>
                         );
                     })()}
-                    {endCell && (() => {
-                        const pos = getCellCenterVector(endCell);
+                    {sandboxViewModel.getEndCell && (() => {
+                        const pos = getCellCenterVector(sandboxViewModel.getEndCell);
                         if (!pos) return null;
                         return (
                             <mesh position={[pos.x, pos.y, pos.z]}>
@@ -741,9 +741,9 @@ const SandboxView: React.FC = () => {
                             </mesh>
                         );
                     })()}
-                    {path && (
+                    {sandboxViewModel.getPath && (
                         <group>
-                            {path.map(([x, y, z], idx) => {
+                            {sandboxViewModel.getPath.map(([x, y, z], idx) => {
                                 if (!grid) return null;
                                 return (
                                     <mesh key={idx} position={[x, y, z]}>
