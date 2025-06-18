@@ -1,4 +1,4 @@
-import {usePathfindingVM} from "../ViewModel/ViewModelContext";
+import {usePathfindingVM} from "../ViewModel/PathfindingViewModelContext";
 
 export const Controls = () => {
     const viewModel = usePathfindingVM();

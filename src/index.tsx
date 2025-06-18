@@ -9,7 +9,7 @@ import SandboxView from './View/SandboxView';
 import {useAtom, useAction} from '@reatom/npm-react';
 import {modeAtom, setMode} from './Model/atoms';
 import {PathfindingViewModel} from './ViewModel/PathfindingViewModel';
-import {ViewModelContext} from './ViewModel/ViewModelContext';
+import {PathfindingViewModelContext} from './ViewModel/PathfindingViewModelContext';
 import {SandboxViewModel} from './ViewModel/SandboxViewModel';
 import {SandboxViewModelContext} from './ViewModel/SandboxViewModelContext';
 
@@ -63,16 +63,16 @@ const App: React.FC = () => {
             <div style={{width: 300, padding: 16, background: '#f7f7f7', borderRight: '1px solid #eee'}}>
                 <ModeSelector/>
                 {mode === 'obj' && (
-                    <ViewModelContext.Provider value={pathfindingViewModel}>
+                    <PathfindingViewModelContext.Provider value={pathfindingViewModel}>
                         <Controls/>
-                    </ViewModelContext.Provider>
+                    </PathfindingViewModelContext.Provider>
                 )}
             </div>
             <div style={{flex: 1, height: '100%'}}>
                 {mode === 'obj' ? (
-                    <ViewModelContext.Provider value={pathfindingViewModel}>
+                    <PathfindingViewModelContext.Provider value={pathfindingViewModel}>
                         <SceneView/>
-                    </ViewModelContext.Provider>
+                    </PathfindingViewModelContext.Provider>
                 ) : (
                     <SandboxViewModelContext.Provider value={sandboxViewModel}>
                         <SandboxView/>

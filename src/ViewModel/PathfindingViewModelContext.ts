@@ -1,10 +1,10 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {PathfindingViewModel} from './PathfindingViewModel';
 
-export const ViewModelContext = React.createContext<PathfindingViewModel | null>(null);
+export const PathfindingViewModelContext = React.createContext<PathfindingViewModel | null>(null);
 
 export const usePathfindingVM = (): PathfindingViewModel => {
-    const viewModel = useContext(ViewModelContext);
+    const viewModel = useContext(PathfindingViewModelContext);
     if (!viewModel) {
         throw new Error('usePathfindingVM must be used within a ViewModelProvider');
     }
