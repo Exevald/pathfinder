@@ -1,7 +1,7 @@
-import { usePathfindingVM } from '../ViewModel/PathfindingViewModel';
+import {usePathfindingVM} from "../ViewModel/ViewModelContext";
 
 export const Controls = () => {
-    const vm = usePathfindingVM();
+    const viewModel = usePathfindingVM();
 
     return (
         <div className="controls" style={{ zIndex: 10, position: 'relative' }}>
@@ -13,7 +13,7 @@ export const Controls = () => {
                         accept=".obj"
                         onChange={e => {
                             const file = e.target.files?.[0];
-                            if (file) vm.setObjFile(file);
+                            if (file) viewModel.setObjFile(file);
                         }}
                     />
                 </label>
@@ -26,16 +26,16 @@ export const Controls = () => {
                         accept=".mtl"
                         onChange={e => {
                             const file = e.target.files?.[0];
-                            if (file) vm.setMtlFile(file);
+                            if (file) viewModel.setMtlFile(file);
                         }}
                     />
                 </label>
             </div>
             <button
                 onClick={() => {
-                    if (vm.objFile && vm.mtlFile) vm.loadObjMtl(vm.objFile, vm.mtlFile);
+                    if (viewModel.getObjFile && viewModel.getMtlFile) viewModel.loadObjMtl(viewModel.getObjFile, viewModel.getMtlFile);
                 }}
-                disabled={!vm.objFile || !vm.mtlFile}
+                disabled={!viewModel.getObjFile || !viewModel.getMtlFile}
             >
                 Отрисовать модель
             </button>

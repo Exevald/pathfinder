@@ -1,22 +1,24 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import ReactDOM from 'react-dom/client';
-import { reatomContext } from '@reatom/npm-react';
-import { createCtx } from '@reatom/core';
+import {reatomContext, useCtx} from '@reatom/npm-react';
+import {createCtx} from '@reatom/core';
 import './index.css';
-import { Controls } from './View/Controls';
+import {Controls} from './View/Controls';
 import SceneView from './View/SceneView';
 import SandboxView from './View/SandboxView';
-import { useAtom, useAction } from '@reatom/npm-react';
-import { modeAtom, setMode } from './Model/atoms';
+import {useAtom, useAction} from '@reatom/npm-react';
+import {modeAtom, setMode} from './Model/atoms';
+import {PathfindingViewModel} from './ViewModel/PathfindingViewModel';
+import {ViewModelContext} from './ViewModel/ViewModelContext';
 
 const ModeSelector: React.FC = () => {
     const [mode] = useAtom(modeAtom);
     const changeMode = useAction(setMode);
 
     return (
-        <div style={{ marginBottom: 16 }}>
+        <div style={{marginBottom: 16}}>
             <h3>Режим работы:</h3>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{display: 'flex', gap: 8}}>
                 <button
                     onClick={() => changeMode('obj')}
                     style={{
@@ -50,17 +52,21 @@ const ModeSelector: React.FC = () => {
 
 const App: React.FC = () => {
     const [mode] = useAtom(modeAtom);
+    const ctx = useCtx();
+    const viewModelContext = useMemo(() => new PathfindingViewModel(ctx), [ctx]);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'row', height: '100vh' }}>
-            <div style={{ width: 300, padding: 16, background: '#f7f7f7', borderRight: '1px solid #eee' }}>
-                <ModeSelector />
-                {mode === 'obj' && <Controls />}
+        <ViewModelContext.Provider value={viewModelContext}>
+            <div style={{display: 'flex', flexDirection: 'row', height: '100vh'}}>
+                <div style={{width: 300, padding: 16, background: '#f7f7f7', borderRight: '1px solid #eee'}}>
+                    <ModeSelector/>
+                    {mode === 'obj' && <Controls/>}
+                </div>
+                <div style={{flex: 1, height: '100%'}}>
+                    {mode === 'obj' ? <SceneView/> : <SandboxView/>}
+                </div>
             </div>
-            <div style={{ flex: 1, height: '100%' }}>
-                {mode === 'obj' ? <SceneView /> : <SandboxView />}
-            </div>
-        </div>
+        </ViewModelContext.Provider>
     );
 };
 
@@ -72,7 +78,7 @@ const ctx = createCtx();
 root.render(
     <React.StrictMode>
         <reatomContext.Provider value={ctx}>
-            <App />
+            <App/>
         </reatomContext.Provider>
     </React.StrictMode>
 );
