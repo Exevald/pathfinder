@@ -1,93 +1,15 @@
 import React, {useState, useRef, useEffect} from 'react';
-import {Canvas, useFrame, useThree} from '@react-three/fiber';
-import {PointerLockControls, OrbitControls, Text} from '@react-three/drei';
+import {Canvas} from '@react-three/fiber';
+import {PointerLockControls, OrbitControls} from '@react-three/drei';
 import {useAction} from '@reatom/npm-react';
 import * as THREE from 'three';
 import {Grid} from '../Model/Grid';
 import {Cell} from '../Model/Cell';
 import {useSandboxVM} from '../ViewModel/SandboxViewModelContext';
 import {updateObstacle} from "../Model/atoms";
-
-type EditMode = 'move' | 'rotate' | 'scale' | null;
-
-const FPSMovement: React.FC<{ enabled: boolean }> = ({enabled}) => {
-    const {camera} = useThree();
-    const move = useRef({forward: false, backward: false, left: false, right: false, up: false});
-    const speed = 0.1;
-
-    React.useEffect(() => {
-        if (!enabled) return;
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            switch (e.code) {
-                case 'KeyW':
-                    move.current.forward = true;
-                    break;
-                case 'KeyS':
-                    move.current.backward = true;
-                    break;
-                case 'KeyA':
-                    move.current.left = true;
-                    break;
-                case 'KeyD':
-                    move.current.right = true;
-                    break;
-                case 'Space':
-                    move.current.up = true;
-                    break;
-            }
-        };
-        const handleKeyUp = (e: KeyboardEvent) => {
-            switch (e.code) {
-                case 'KeyW':
-                    move.current.forward = false;
-                    break;
-                case 'KeyS':
-                    move.current.backward = false;
-                    break;
-                case 'KeyA':
-                    move.current.left = false;
-                    break;
-                case 'KeyD':
-                    move.current.right = false;
-                    break;
-                case 'Space':
-                    move.current.up = false;
-                    break;
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
-        };
-    }, [enabled]);
-
-    useFrame(() => {
-        if (!enabled) return;
-        const direction = new THREE.Vector3();
-        camera.getWorldDirection(direction);
-
-        const moveVector = new THREE.Vector3();
-        if (move.current.forward) moveVector.add(direction);
-        if (move.current.backward) moveVector.sub(direction);
-
-        const right = new THREE.Vector3();
-        right.crossVectors(camera.up, direction).normalize();
-        if (move.current.right) moveVector.sub(right);
-        if (move.current.left) moveVector.add(right);
-
-        if (move.current.up) moveVector.y += 1;
-
-        if (moveVector.lengthSq() > 0) {
-            moveVector.normalize().multiplyScalar(speed);
-            camera.position.add(moveVector);
-        }
-    });
-
-    return null;
-};
+import {EditMode, EditToolbar} from "./components/EditToolbar";
+import {FPSMovement} from "./components/FPSMovement";
+import {GridDisplay} from "./components/GridDisplay";
 
 const ArrowManipulator: React.FC<{
     axis: 0 | 1 | 2;
@@ -270,96 +192,6 @@ const ObstacleObject: React.FC<{
     );
 };
 
-const EditToolbar: React.FC<{
-    editMode: EditMode;
-    onModeChange: (mode: EditMode) => void;
-    onDelete: () => void;
-    onDuplicate: () => void;
-    onReset: () => void;
-}> = ({editMode, onModeChange, onDelete, onDuplicate, onReset}) => {
-    return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            padding: '8px',
-            background: '#f0f0f0',
-            borderRadius: '4px',
-            marginBottom: '16px'
-        }}>
-            <div style={{display: 'flex', gap: '8px'}}>
-                <button
-                    onClick={() => onModeChange('move')}
-                    style={{
-                        background: editMode === 'move' ? '#4CAF50' : '#fff',
-                        color: editMode === 'move' ? 'white' : 'black',
-                        border: '1px solid #ccc',
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Переместить
-                </button>
-                <button
-                    onClick={() => onModeChange('scale')}
-                    style={{
-                        background: editMode === 'scale' ? '#4CAF50' : '#fff',
-                        color: editMode === 'scale' ? 'white' : 'black',
-                        border: '1px solid #ccc',
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Изменить размер
-                </button>
-            </div>
-            <div style={{display: 'flex', gap: '8px'}}>
-                <button
-                    onClick={onDuplicate}
-                    style={{
-                        background: '#2196F3',
-                        color: 'white',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Дублировать
-                </button>
-                <button
-                    onClick={onReset}
-                    style={{
-                        background: '#FF9800',
-                        color: 'white',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Сбросить
-                </button>
-                <button
-                    onClick={onDelete}
-                    style={{
-                        background: '#ff4444',
-                        color: 'white',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Удалить
-                </button>
-            </div>
-        </div>
-    );
-};
-
 const SandboxView: React.FC = () => {
     const updateObstacleById = useAction(updateObstacle);
     const [selectedObstacle, setSelectedObstacle] = useState<string | null>(null);
@@ -484,20 +316,6 @@ const SandboxView: React.FC = () => {
             sandboxViewModel.recalculateGridCosts();
         }
     });
-
-    const getCellByPosition = React.useCallback((pos: THREE.Vector3): Cell | null => {
-        if (!grid) return null;
-        const offset = [0, 0, 0]
-        const cellLength = grid.getCellLength();
-        const layerHeight = grid.getLayerLength();
-        const ix = Math.floor((pos.x - offset[0]) / cellLength);
-        const iz = Math.floor((pos.z - offset[2]) / cellLength);
-        let iy = Math.floor((pos.y - offset[1]) / layerHeight);
-        if (iy < 0) {
-            iy = 0
-        }
-        return grid.getCellByIndices(ix, iy, iz);
-    }, [grid]);
 
     const getCellCenterVector = React.useCallback((cell: Cell): THREE.Vector3 | null => {
         if (!grid || !cell) return null;
@@ -690,37 +508,7 @@ const SandboxView: React.FC = () => {
                             isFlightMode={sandboxViewModel.assertFlightMode}
                         />
                     ))}
-                    {grid && showGrid && (() => {
-                        const cellLength = grid.getCellLength();
-                        const layerHeight = grid.getLayerLength();
-                        const gridSizeX = grid.getGridSizeX();
-                        const gridSizeY = grid.getGridSizeY();
-                        const gridSizeZ = grid.getGridSizeZ();
-                        const offset = grid.getOffset ? grid.getOffset() : [0, 0, 0];
-                        const allCells = [];
-                        for (let x = 0; x < gridSizeX; ++x) {
-                            for (let y = 0; y < gridSizeY; ++y) {
-                                for (let z = 0; z < gridSizeZ; ++z) {
-                                    const cx = offset[0] + (x + 0.5) * cellLength;
-                                    const cy = offset[1] + (y + 0.5) * cellLength;
-                                    const cz = offset[2] + (z + 0.5) * layerHeight;
-                                    const cell = grid.getCellByIndices(x, y, z);
-                                    if (cell) {
-                                        allCells.push(
-                                            <CellEdges
-                                                key={`cell-${x}-${y}-${z}`}
-                                                center={[cx, cz, cy]}
-                                                size={[cellLength, cellLength, layerHeight]}
-                                                cost={cell.getCost()}
-                                                showText={showCostText}
-                                            />
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                        return <group>{allCells}</group>;
-                    })()}
+                    {grid && showGrid && <GridDisplay grid={grid} showCostText={showCostText}/>}
                     {sandboxViewModel.getStartCell && (() => {
                         const pos = getCellCenterVector(sandboxViewModel.getStartCell);
                         if (!pos) return null;
@@ -771,64 +559,6 @@ const SandboxView: React.FC = () => {
                 boxSizing: 'border-box',
             }}/>
         </div>
-    );
-};
-
-function getBoxEdges(center: [number, number, number], size: [number, number, number]) {
-    const [cx, cy, cz] = center;
-    const [sx, sy, sz] = size;
-    const hx = sx / 2, hy = sy / 2, hz = sz / 2;
-    const v = [
-        [cx - hx, cy - hy, cz - hz],
-        [cx + hx, cy - hy, cz - hz],
-        [cx + hx, cy + hy, cz - hz],
-        [cx - hx, cy + hy, cz - hz],
-        [cx - hx, cy - hy, cz + hz],
-        [cx + hx, cy - hy, cz + hz],
-        [cx + hx, cy + hy, cz + hz],
-        [cx - hx, cy + hy, cz + hz],
-    ];
-    const edges = [
-        [v[0], v[1]], [v[1], v[2]], [v[2], v[3]], [v[3], v[0]],
-        [v[4], v[5]], [v[5], v[6]], [v[6], v[7]], [v[7], v[4]],
-        [v[0], v[4]], [v[1], v[5]], [v[2], v[6]], [v[3], v[7]],
-    ];
-    return edges.flat();
-}
-
-const CellEdges: React.FC<{
-    center: [number, number, number],
-    size: [number, number, number],
-    cost: number,
-    showText: boolean
-}> = ({center, size, cost, showText}) => {
-    const points = getBoxEdges(center, size).map(([x, y, z]) => new THREE.Vector3(x, y, z));
-    return (
-        <group>
-            <lineSegments>
-                <bufferGeometry>
-                    <bufferAttribute
-                        attach="attributes-position"
-                        args={[
-                            new Float32Array(points.flatMap(p => [p.x, p.y, p.z])),
-                            3
-                        ]}
-                    />
-                </bufferGeometry>
-                <lineBasicMaterial color="red" linewidth={1.5}/>
-            </lineSegments>
-            {showText && (
-                <Text
-                    position={[center[0], center[1], center[2]]}
-                    fontSize={0.05}
-                    color="black"
-                    anchorX="center"
-                    anchorY="middle"
-                >
-                    {cost.toFixed(1)}
-                </Text>
-            )}
-        </group>
     );
 };
 
