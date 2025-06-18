@@ -195,7 +195,7 @@ export class SandboxViewModel {
     public recalculateGridCosts = (): void => {
         if (!this.grid) return;
 
-        const droneRadius = 0.3;
+        const droneRadius = 1;
         const k = 1.5;
         const cellLength = this.grid.getCellLength();
         const layerHeight = this.grid.getLayerLength();
@@ -204,35 +204,45 @@ export class SandboxViewModel {
         const sizeZ = this.grid.getGridSizeZ();
         const cellCenter = new THREE.Vector3();
         const tempBox = new THREE.Box3();
+
         for (let z = 0; z < sizeZ; z++) {
             for (let y = 0; y < sizeY; y++) {
                 for (let x = 0; x < sizeX; x++) {
                     const [cx, cy, cz] = this.grid.getCellCenter(x, y, z);
                     cellCenter.set(cx, cy, cz);
                     tempBox.setFromCenterAndSize(cellCenter, new THREE.Vector3(cellLength, cellLength, layerHeight));
+
                     let cost = 50;
                     let minDist = Infinity;
                     let intersects = false;
+
                     for (const obs of this.getObstacles) {
                         const [ox, oy, oz] = obs.position;
                         const [sx, sy, sz] = obs.size;
                         const obsBox = new THREE.Box3();
                         obsBox.setFromCenterAndSize(new THREE.Vector3(ox, oy, oz), new THREE.Vector3(sx, sy, sz));
+
                         if (obsBox.intersectsBox(tempBox)) {
                             intersects = true;
                             break;
                         } else {
                             const dist = obsBox.distanceToPoint(cellCenter);
-                            if (dist < minDist) minDist = dist;
+                            if (dist < minDist) {
+                                minDist = dist;
+                            }
                         }
                     }
+
                     if (intersects) {
                         cost = 254;
+                    } else if (this.getObstacles.length === 0) {
+                        cost = 50;
                     } else if (minDist < droneRadius) {
                         cost = 253;
                     } else {
                         cost = Math.round(Math.exp(-k * (minDist - droneRadius)) * 203 + 50);
                     }
+
                     this.grid.setCellCost({x, y, z}, cost);
                 }
             }

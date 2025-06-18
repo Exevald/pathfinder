@@ -4,7 +4,7 @@ export const Controls = () => {
     const viewModel = usePathfindingVM();
 
     return (
-        <div className="controls" style={{ zIndex: 10, position: 'relative' }}>
+        <div className="controls" style={{zIndex: 10, position: 'relative', display: "flex", flexDirection: "column", gap: 10}}>
             <div>
                 <label>
                     Загрузить OBJ:

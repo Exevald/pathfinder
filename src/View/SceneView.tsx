@@ -7,6 +7,7 @@ import {useCtx} from '@reatom/npm-react';
 import {FPSMovement} from "./components/FPSMovement";
 import {GridDisplay} from "./components/GridDisplay";
 import {CameraControls} from "./components/CameraControls";
+import {ThreeEvent} from "@react-three/fiber/dist/declarations/src/core/events";
 
 const SceneView: React.FC = () => {
     const ctx = useCtx();
@@ -36,7 +37,7 @@ const SceneView: React.FC = () => {
         };
     }, []);
 
-    const handleSceneClick = (e: any) => {
+    const handleSceneClick = (e: ThreeEvent<MouseEvent>) => {
         if (!pickMode) return;
         const point = e.point as THREE.Vector3;
         if (!point) return;
@@ -89,7 +90,8 @@ const SceneView: React.FC = () => {
                     </group>
                 )}
                 {getObjObject && <primitive object={getObjObject}/>}
-                {viewModel.getGrid && showGrid && <GridDisplay grid={viewModel.getGrid} showCostText={showCostText}/>}
+                {viewModel.getGrid && showGrid &&
+                    <GridDisplay grid={viewModel.getGrid} showCostText={showCostText} isSandbox={false}/>}
                 {getStartCell && (() => {
                     const pos = viewModel.getCellCenterVector(getStartCell);
                     if (!pos) return null;

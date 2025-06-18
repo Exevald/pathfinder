@@ -26,10 +26,7 @@ export const calculatePath = action((ctx) => {
     const start = ctx.get(startCellAtom);
     const end = ctx.get(endCellAtom);
     if (grid && start && end) {
-        console.time('Pathfinding');
         const path = grid.findPath(start, end);
-        console.log(path)
-        console.timeEnd('Pathfinding');
         pathAtom(ctx, path);
     }
 }, 'calculatePath');
@@ -63,10 +60,8 @@ export const loadOBJMTL = action((ctx, {objFile, mtlFile}: { objFile: File; mtlF
             objObjectAtom(ctx, obj);
 
             setTimeout(() => {
-                console.time('Grid and Cost Calculation');
-
-                const cellLength = 1;
-                const layerHeight = 1;
+                const cellLength = 0.5;
+                const layerHeight = 0.5;
                 const droneRadius = 0.1;
                 const k = 0.5;
 
@@ -124,8 +119,6 @@ export const loadOBJMTL = action((ctx, {objFile, mtlFile}: { objFile: File; mtlF
                     }
                 }
 
-                console.timeEnd('Grid and Cost Calculation');
-
                 gridAtom(ctx, grid);
                 isLoadingAtom(ctx, false);
             }, 10);
@@ -163,8 +156,8 @@ export const removeObstacle = action((ctx, id: string) => {
 
 export const updateObstacle = action((ctx, id: string, updates: Partial<Omit<Obstacle, 'id'>>) => {
     const obstacles = ctx.get(obstaclesAtom);
-    obstaclesAtom(ctx, obstacles.map(o => 
-        o.id === id ? { ...o, ...updates } : o
+    obstaclesAtom(ctx, obstacles.map(o =>
+        o.id === id ? {...o, ...updates} : o
     ));
 });
 
@@ -178,7 +171,7 @@ export const saveSandboxState = action((ctx) => {
         obstacles,
         version: '1.0'
     };
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -192,13 +185,9 @@ export const saveSandboxState = action((ctx) => {
 export const loadSandboxState = action((ctx, file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-        try {
-            const state = JSON.parse(e.target?.result as string);
-            if (state.version === '1.0' && Array.isArray(state.obstacles)) {
-                obstaclesAtom(ctx, state.obstacles);
-            }
-        } catch (error) {
-            console.error('Failed to load sandbox state:', error);
+        const state = JSON.parse(e.target?.result as string);
+        if (state.version === '1.0' && Array.isArray(state.obstacles)) {
+            obstaclesAtom(ctx, state.obstacles);
         }
     };
     reader.readAsText(file);

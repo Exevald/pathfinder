@@ -195,7 +195,6 @@ const ObstacleObject: React.FC<{
 const SandboxView: React.FC = () => {
     const updateObstacleById = useAction(updateObstacle);
     const [selectedObstacle, setSelectedObstacle] = useState<string | null>(null);
-    const [getPickMode, setgetPickMode] = useState<'start' | 'end' | null>(null);
     const [showGrid, setShowGrid] = useState(true);
     const [showCostText, setShowCostText] = useState(false);
     const [grid, setGrid] = useState<Grid | null>(null);
@@ -298,13 +297,13 @@ const SandboxView: React.FC = () => {
 
     React.useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && getPickMode) {
-                setgetPickMode(null);
+            if (e.key === 'Escape' && sandboxViewModel.getPickMode) {
+                sandboxViewModel.setPickMode(null);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [getPickMode]);
+    }, [sandboxViewModel.getPickMode]);
 
     useEffect(() => {
         const offset: [number, number, number] = [0, 0, 0];
@@ -412,13 +411,6 @@ const SandboxView: React.FC = () => {
                 <button onClick={() => setShowCostText(v => !v)}>
                     {showCostText ? 'Скрыть стоимость' : 'Показать стоимость'}
                 </button>
-                <button onClick={() => {
-                    if (grid) {
-                        sandboxViewModel.recalculateGridCosts();
-                    }
-                }}>
-                    Пересчитать стоимости
-                </button>
                 {sandboxViewModel.getPickMode && (
                     <div style={{
                         marginTop: 8,
@@ -429,7 +421,7 @@ const SandboxView: React.FC = () => {
                         color: '#856404'
                     }}>
                         Режим выбора активен. Кликните на сетку для
-                        выбора {getPickMode === 'start' ? 'начальной' : 'конечной'} точки.
+                        выбора {sandboxViewModel.getPickMode === 'start' ? 'начальной' : 'конечной'} точки.
                         <button
                             onClick={() => sandboxViewModel.setPickMode(null)}
                             style={{
@@ -508,7 +500,7 @@ const SandboxView: React.FC = () => {
                             isFlightMode={sandboxViewModel.assertFlightMode}
                         />
                     ))}
-                    {grid && showGrid && <GridDisplay grid={grid} showCostText={showCostText}/>}
+                    {grid && showGrid && <GridDisplay grid={grid} showCostText={showCostText} isSandbox={true}/>}
                     {sandboxViewModel.getStartCell && (() => {
                         const pos = getCellCenterVector(sandboxViewModel.getStartCell);
                         if (!pos) return null;

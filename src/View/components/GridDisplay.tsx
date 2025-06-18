@@ -51,9 +51,10 @@ const CellEdges: React.FC<{
 interface GridDisplayProps {
     grid: Grid;
     showCostText: boolean;
+    isSandbox: boolean;
 }
 
-export const GridDisplay: React.FC<GridDisplayProps> = ({grid, showCostText}) => {
+export const GridDisplay: React.FC<GridDisplayProps> = ({grid, showCostText, isSandbox}) => {
     const cellLength = grid.getCellLength();
     const layerHeight = grid.getLayerLength();
     const gridSizeX = grid.getGridSizeX();
@@ -67,8 +68,12 @@ export const GridDisplay: React.FC<GridDisplayProps> = ({grid, showCostText}) =>
             for (let y = 0; y < gridSizeY; ++y) {
                 for (let z = 0; z < gridSizeZ; ++z) {
                     const cx = offset[0] + (x + 0.5) * cellLength;
-                    const cy = offset[1] + (y + 0.5) * cellLength;
-                    const cz = offset[2] + (z + 0.5) * layerHeight;
+                    let cy = offset[1] + (y + 0.5) * cellLength;
+                    let cz = offset[2] + (z + 0.5) * layerHeight;
+                    if (isSandbox) {
+                        cy = offset[1] + (z + 0.5) * layerHeight;
+                        cz = offset[2] + (y + 0.5) * cellLength;
+                    }
                     const cell = grid.getCellByIndices(x, y, z);
                     if (cell) {
                         cells.push(
@@ -85,7 +90,7 @@ export const GridDisplay: React.FC<GridDisplayProps> = ({grid, showCostText}) =>
             }
         }
         return cells;
-    }, [grid, showCostText, cellLength, layerHeight, gridSizeX, gridSizeY, gridSizeZ, offset]);
+    }, [gridSizeX, gridSizeY, gridSizeZ, offset, cellLength, layerHeight, isSandbox, grid, showCostText]);
 
 
     return (

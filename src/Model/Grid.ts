@@ -136,7 +136,6 @@ export class Grid {
         return [];
     }
 
-    public getCells = (): Cell[][][] => this.cells;
     public getCellLength = (): number => this.cellLength;
     public getLayerLength = (): number => this.layerHeight;
     public getGridSizeX = (): number => this.gridSizeX;
